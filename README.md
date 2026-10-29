@@ -1,4 +1,4 @@
-# Obsidian AI Hub & Knowledge Manager
+# Obsidian AI Hub & Knowledge Manager [Web Prototype • Alpha v0.1]
 
 <p align="center">
   <img src="https://img.shields.io/badge/React-19.0-61dafb?style=for-the-badge&logo=react&logoColor=black" alt="React 19" />
