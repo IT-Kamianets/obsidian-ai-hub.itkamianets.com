@@ -19,4 +19,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
-Thumbs.dbPROJECT_CONTEXT.md
+Thumbs.db
+PROJECT_CONTEXT.md
