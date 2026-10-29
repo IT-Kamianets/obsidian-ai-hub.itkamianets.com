@@ -1,0 +1,22 @@
+# Папки зависимостей (гигабайты библиотек)
+node_modules/
+.pnp
+.pnp.js
+
+# Сборка и временные файлы
+dist/
+dist-ssr/
+build/
+*.local
+
+# Секретные ключи и переменные окружения
+.env
+.env.*
+!.env.example
+
+# Логи ошибок и мусор ОС
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
