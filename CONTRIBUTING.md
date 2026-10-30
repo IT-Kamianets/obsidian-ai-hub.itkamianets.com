@@ -17,3 +17,4 @@ Have a question or proposal? Join the conversation in [GitHub Discussions](../..
    ```bash
    npm run lint
    npm run build
+4. Open a Pull Request against the `dev` branch with a clear description of your changes.
