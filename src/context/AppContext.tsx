@@ -139,7 +139,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const theme = settings.theme;
   const language = settings.language;
-  const t = TRANSLATIONS[language] || TRANSLATIONS.ru;
+  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   const setTheme = (newTheme: AppTheme) => {
     localStorage.setItem('obsidian_hub_theme', newTheme);

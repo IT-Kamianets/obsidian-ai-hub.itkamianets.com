@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { ObsidianGraphBackground } from './ObsidianGraphBackground';
 import { 
   Server, 
   Mic, 
   Bot, 
   ShieldCheck, 
   ArrowRight, 
-  Sparkles, 
   Database, 
   Lock, 
   X, 
@@ -29,7 +29,10 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian-bg text-obsidian-text relative overflow-hidden flex flex-col selection:bg-obsidian-purple selection:text-white transition-colors duration-200">
+    <div className="min-h-screen text-obsidian-text relative overflow-hidden flex flex-col selection:bg-obsidian-purple selection:text-white transition-colors duration-200 isolate">
+      {/* Interactive Obsidian Knowledge Graph Background */}
+      <ObsidianGraphBackground />
+
       {/* Background glow ornaments */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-purple-900/20 via-indigo-900/10 to-transparent blur-[120px] pointer-events-none" />
       <div className="absolute top-1/3 -left-48 w-96 h-96 bg-purple-600/10 rounded-full blur-[100px] pointer-events-none" />
@@ -72,12 +75,6 @@ export const LandingPage: React.FC = () => {
             </div>
 
             <button
-              onClick={bypassAuth}
-              className="text-xs sm:text-sm text-obsidian-muted hover:text-white px-3 py-1.5 rounded-lg border border-obsidian-border hover:border-obsidian-border-hover transition-colors font-medium hidden sm:inline-block"
-            >
-              {t.hero_badge_bypass}
-            </button>
-            <button
               onClick={() => setIsAuthModalOpen(true)}
               className="text-xs sm:text-sm bg-obsidian-purple hover:bg-obsidian-purple-hover text-white px-4 py-2 rounded-lg font-medium shadow-lg shadow-purple-900/40 transition-all flex items-center space-x-1.5 hover:shadow-purple-700/50 hover:scale-[1.02] active:scale-[0.98]"
             >
@@ -110,21 +107,13 @@ export const LandingPage: React.FC = () => {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-16">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-16">
           <button
             onClick={() => setIsAuthModalOpen(true)}
             className="w-full sm:w-auto px-8 py-4 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-base shadow-xl shadow-purple-900/50 transition-all flex items-center justify-center space-x-3 group hover:scale-[1.02] active:scale-[0.98] border border-purple-400/20"
           >
             <span>{t.hero_cta_start}</span>
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </button>
-
-          <button
-            onClick={bypassAuth}
-            className="w-full sm:w-auto px-8 py-4 rounded-xl bg-obsidian-surface/90 hover:bg-obsidian-elevated text-obsidian-text border border-obsidian-border hover:border-purple-500/40 font-medium text-base transition-all flex items-center justify-center space-x-2"
-          >
-            <Sparkles className="w-5 h-5 text-purple-400" />
-            <span>{t.hero_cta_demo}</span>
           </button>
         </div>
 

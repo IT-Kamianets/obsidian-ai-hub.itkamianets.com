@@ -287,5 +287,5 @@ export const DEFAULT_SETTINGS: AppSettings = {
   geminiApiKey: 'AIzaSyDemoKeyObsidianHub2026',
   offlineMode: false,
   theme: 'dark',
-  language: 'ru'
+  language: 'en'
 };
