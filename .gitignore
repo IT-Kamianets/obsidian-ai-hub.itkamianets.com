@@ -20,4 +20,7 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 Thumbs.db
+# Локальная проектная документация и контекст
 PROJECT_CONTEXT.md
+SPECIFICATION.md
+ROADMAP.md

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Bot, 
@@ -9,25 +9,24 @@ import {
   Paperclip, 
   Plus, 
   Settings as SettingsIcon, 
-  PanelRightClose, 
-  PanelRightOpen, 
   FileText, 
   CheckCircle2, 
-  Sparkles, 
   Cpu, 
   ChevronRight, 
-  ChevronDown,
-  ChevronUp,
-  Trash2,
-  Square,
-  CheckSquare,
-  StopCircle,
-  Volume2,
-  Search
+  ChevronDown, 
+  ChevronUp, 
+  Trash2, 
+  Square, 
+  CheckSquare, 
+  Search, 
+  ArrowLeft, 
+  RefreshCw,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { ChatMessage, ToolCall } from '../types';
 
-// ReAct Tool Calls Accordion Component
+// ==================== 1. REACT TOOL CALLS ACCORDION ====================
 const ToolCallsAccordion: React.FC<{ toolCalls: ToolCall[]; openNote: (path: string) => void }> = ({ 
   toolCalls, 
   openNote 
@@ -52,28 +51,28 @@ const ToolCallsAccordion: React.FC<{ toolCalls: ToolCall[]; openNote: (path: str
   const uniqueFiles = Array.from(new Set(referencedFiles));
 
   return (
-    <div className="w-full my-2.5 rounded-xl border border-obsidian-border bg-obsidian-subtle/80 overflow-hidden font-mono text-xs transition-all shadow-sm">
-      {/* Compact summary bar */}
+    <div className="w-full my-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 overflow-hidden font-mono text-xs transition-all shadow-2xs">
+      {/* Summary Bar */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-3.5 py-2.5 flex items-center justify-between text-left hover:bg-obsidian-elevated/70 transition-colors select-none group"
+        className="w-full px-3.5 py-2.5 flex items-center justify-between text-left hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors select-none group"
       >
         <div className="flex items-center space-x-2 truncate">
-          <span className="text-sm">⚙️</span>
-          <span className="font-semibold text-purple-300 group-hover:text-purple-200">
+          <span className="text-zinc-500 font-semibold text-xs">⚙</span>
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
             {t.tools_used} {toolCalls.length}
           </span>
-          <span className="text-obsidian-dim truncate hidden sm:inline">
+          <span className="text-zinc-500 dark:text-zinc-400 truncate hidden sm:inline text-[11px]">
             ({toolNames.join(', ')})
           </span>
         </div>
 
         <div className="flex items-center space-x-2 shrink-0">
-          <span className="text-[11px] text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 px-2 py-0.5 rounded-full flex items-center">
-            <CheckCircle2 className="w-3 h-3 mr-1" /> {t.tools_executed}
+          <span className="text-[11px] font-mono text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-zinc-900 dark:text-zinc-100" /> {t.tools_executed}
           </span>
-          <span className="text-obsidian-dim group-hover:text-white transition-transform duration-200">
+          <span className="text-zinc-400 group-hover:text-zinc-950 dark:group-hover:text-zinc-100 transition-colors">
             {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </span>
         </div>
@@ -81,22 +80,21 @@ const ToolCallsAccordion: React.FC<{ toolCalls: ToolCall[]; openNote: (path: str
 
       {/* Expanded tool details */}
       {isOpen && (
-        <div className="border-t border-obsidian-border/70 p-3.5 space-y-3 bg-obsidian-bg/70 animate-fade-in">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 p-3.5 space-y-3 bg-white dark:bg-zinc-950/70">
           {/* Quick list of accessed files */}
           {uniqueFiles.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 pb-2.5 border-b border-obsidian-border/60 text-[11px]">
-              <span className="text-obsidian-dim flex items-center">
-                <FileText className="w-3 h-3 mr-1 text-purple-400" /> {t.tools_files_in_req}
+            <div className="flex flex-wrap items-center gap-1.5 pb-2.5 border-b border-zinc-200 dark:border-zinc-800 text-[11px]">
+              <span className="text-zinc-500 flex items-center">
+                <FileText className="w-3 h-3 mr-1 text-zinc-400" /> {t.tools_files_in_req}
               </span>
               {uniqueFiles.map((file, fIdx) => (
                 <button
                   key={fIdx}
                   type="button"
                   onClick={(e) => { e.stopPropagation(); openNote(file); }}
-                  className="wikilink"
+                  className="px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-800 dark:text-zinc-200 underline decoration-dashed underline-offset-2"
                   title={t.tools_preview_note}
                 >
-                  <FileText className="w-3 h-3 text-purple-400" />
                   <span>{file}</span>
                 </button>
               ))}
@@ -108,25 +106,25 @@ const ToolCallsAccordion: React.FC<{ toolCalls: ToolCall[]; openNote: (path: str
             {toolCalls.map((tc, idx) => (
               <div 
                 key={tc.id || idx}
-                className="p-2.5 rounded-lg bg-obsidian-surface border border-obsidian-border/70 text-left"
+                className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-left font-mono"
               >
                 <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center space-x-1.5 text-purple-400 font-semibold">
-                    <span className="text-obsidian-dim">#{idx + 1}</span>
-                    <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                  <div className="flex items-center space-x-1.5 text-zinc-900 dark:text-zinc-100 font-semibold">
+                    <span className="text-zinc-400">#{idx + 1}</span>
+                    <Cpu className="w-3.5 h-3.5 text-zinc-500" />
                     <span>{tc.name}</span>
                   </div>
-                  <span className="text-[10px] text-obsidian-dim font-mono">{tc.timestamp}</span>
+                  <span className="text-[10px] text-zinc-400 font-mono">{tc.timestamp}</span>
                 </div>
 
-                <div className="pl-4 border-l border-purple-800/40 space-y-1 text-[11px] mt-1.5">
-                  <div className="text-obsidian-muted">
-                    <span className="text-obsidian-dim">{t.tools_params} </span>
-                    <span className="text-purple-200">{JSON.stringify(tc.parameters)}</span>
+                <div className="pl-3 border-l border-zinc-300 dark:border-zinc-700 space-y-1 text-[11px] mt-1.5">
+                  <div className="text-zinc-600 dark:text-zinc-400">
+                    <span className="text-zinc-400">{t.tools_params} </span>
+                    <span className="text-zinc-800 dark:text-zinc-200">{JSON.stringify(tc.parameters)}</span>
                   </div>
                   {tc.result && (
-                    <div className="text-emerald-300">
-                      <span className="text-obsidian-dim">{t.tools_result} </span>
+                    <div className="text-zinc-700 dark:text-zinc-300">
+                      <span className="text-zinc-400">{t.tools_result} </span>
                       <span>{tc.result}</span>
                     </div>
                   )}
@@ -140,6 +138,7 @@ const ToolCallsAccordion: React.FC<{ toolCalls: ToolCall[]; openNote: (path: str
   );
 };
 
+// ==================== 2. MAIN CHAT INTERFACE COMPONENT ====================
 export const ChatInterface: React.FC = () => {
   const { 
     activeSession, 
@@ -158,51 +157,236 @@ export const ChatInterface: React.FC = () => {
     toggleTaskStatus, 
     setMultimodalModal,
     showToast,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
     t
   } = useApp();
 
+  // Left Sidebar State (Vault Explorer)
+  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(true);
+  const [vaultSearchQuery, setVaultSearchQuery] = useState('');
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
+
+  // Center & Input states
   const [inputPrompt, setInputPrompt] = useState('');
   const [attachedFiles, setAttachedFiles] = useState<Array<{ name: string; type: 'file' | 'image' | 'audio' }>>([]);
-  const [isInlineRecording, setIsInlineRecording] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [attachedNotes, setAttachedNotes] = useState<string[]>([]);
+  const [isDragOverInput, setIsDragOverInput] = useState(false);
+  const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('Flash Средний');
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const bottomInputRef = useRef<HTMLInputElement>(null);
+
+  // Nickname & Dynamic Greetings
+  const [nickname, setNickname] = useState(() => localStorage.getItem('obsidian_chat_user_name') || 'Alex');
+  
+  const greetingsPool = useMemo(() => {
+    if (language === 'uk') {
+      return [
+        `Привіт, ${nickname}. З чого почнемо?`,
+        `Добрий день, ${nickname}. Чим займемося сьогодні?`,
+        `Який план на сьогодні, ${nickname}?`,
+        `Готовий до роботи. З чого почнемо, ${nickname}?`,
+        `${nickname}, з чого почнемо сьогодні?`,
+        `З чого почнемо, ${nickname}?`
+      ];
+    }
+    if (language === 'en') {
+      return [
+        `Hello, ${nickname}. What should we start with?`,
+        `Good day, ${nickname}. What are we doing today?`,
+        `What is the plan for today, ${nickname}?`,
+        `Ready to work. Where shall we begin, ${nickname}?`,
+        `${nickname}, where should we start today?`,
+        `Where shall we begin, ${nickname}?`
+      ];
+    }
+    return [
+      `Привет, ${nickname}. С чего начнем?`,
+      `Добрый день, ${nickname}. Чем займемся сегодня?`,
+      `Какой план на сегодня, ${nickname}?`,
+      `Готов к работе. С чего начнем, ${nickname}?`,
+      `${nickname}, с чего начнем сегодня?`,
+      `С чего начнем, ${nickname}?`
+    ];
+  }, [nickname, language]);
+
+  const [greetingIndex, setGreetingIndex] = useState(() => Math.floor(Math.random() * 6));
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachMenuRef = useRef<HTMLDivElement>(null);
+  const modelMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   // Auto scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeSession?.messages, isAgentTyping, currentAgentAction]);
 
-  // Timer for inline voice recording
+  // Click outside listener for attach, model, and language dropdown menus (using mousedown for reliability)
   useEffect(() => {
-    let interval: any;
-    if (isInlineRecording) {
-      interval = setInterval(() => {
-        setRecordSeconds(s => s + 1);
-      }, 1000);
-    } else {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [isInlineRecording]);
+    const handleMouseDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (attachMenuRef.current && !attachMenuRef.current.contains(target)) {
+        setIsAttachMenuOpen(false);
+      }
+      if (modelMenuRef.current && !modelMenuRef.current.contains(target)) {
+        setIsModelMenuOpen(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(target)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, []);
 
+  // Keyboard shortcut Ctrl+K / Cmd+K for Vault search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('vaultSearchInput');
+        searchInput?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Cycle dynamic greeting
+  const cycleGreeting = () => {
+    setGreetingIndex((prev) => (prev + 1) % greetingsPool.length);
+  };
+
+  // Create new chat with fresh randomized greeting
+  const handleCreateNewChat = () => {
+    createNewChat();
+    setGreetingIndex(Math.floor(Math.random() * greetingsPool.length));
+  };
+
+  // Edit Nickname
+  const editNickname = () => {
+    const newName = prompt("Введите ваше имя / никнейм для приветствия:", nickname);
+    if (newName && newName.trim()) {
+      const clean = newName.trim();
+      setNickname(clean);
+      localStorage.setItem('obsidian_chat_user_name', clean);
+      showToast(`Имя пользователя изменено: ${clean}`, 'info');
+    }
+  };
+
+  // Drag and Drop Note into Chat Input
+  const handleDragStartNote = (e: React.DragEvent, path: string) => {
+    e.dataTransfer.setData('text/plain', `[[${path}]]`);
+    e.dataTransfer.setData('application/obsidian-file', path);
+    e.dataTransfer.effectAllowed = 'copyMove';
+  };
+
+  const handleDragOverInput = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!isDragOverInput) setIsDragOverInput(true);
+  };
+
+  const handleDragLeaveInput = (e: React.DragEvent) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    if (
+      e.clientX <= rect.left ||
+      e.clientX >= rect.right ||
+      e.clientY <= rect.top ||
+      e.clientY >= rect.bottom
+    ) {
+      setIsDragOverInput(false);
+    }
+  };
+
+  const handleDropOnInput = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOverInput(false);
+
+    let droppedPath = e.dataTransfer.getData('application/obsidian-file');
+    if (!droppedPath) {
+      const rawText = e.dataTransfer.getData('text/plain');
+      if (rawText.startsWith('[[') && rawText.endsWith(']]')) {
+        droppedPath = rawText.slice(2, -2);
+      } else if (rawText) {
+        droppedPath = rawText;
+      }
+    }
+
+    if (droppedPath) {
+      // Just attach the note without inserting extra instruction text
+      setAttachedNotes(prev => prev.includes(droppedPath) ? prev : [...prev, droppedPath]);
+
+      const filename = droppedPath.split('/').pop() || droppedPath;
+      showToast(
+        language === 'uk' ? `Файл прикріплено: ${filename}` : language === 'en' ? `Attached: ${filename}` : `Файл прикреплен: ${filename}`,
+        'info',
+        droppedPath
+      );
+
+      // Focus active input
+      setTimeout(() => {
+        if (hasMessages) {
+          bottomInputRef.current?.focus();
+        } else {
+          inputRef.current?.focus();
+        }
+      }, 50);
+    }
+  };
+
+  const removeAttachedNote = (path: string) => {
+    setAttachedNotes(prev => prev.filter(p => p !== path));
+  };
+
+  // Handle message dispatch
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if ((!inputPrompt.trim() && attachedFiles.length === 0) || isAgentTyping) return;
+    const text = inputPrompt.trim();
+    if ((!text && attachedFiles.length === 0 && attachedNotes.length === 0) || isAgentTyping) return;
 
-    const currentText = inputPrompt;
+    if (text.toLowerCase() === '/settings') {
+      setInputPrompt('');
+      setAttachedNotes([]);
+      setRoute('/settings');
+      return;
+    }
+
     const currentFiles = [...attachedFiles];
+    const currentNotes = [...attachedNotes];
+    
+    // Combine regular files and attached vault notes as message attachments
+    const noteAttachments: Array<{ name: string; type: 'file' | 'image' | 'audio' }> = currentNotes.map(nPath => ({
+      name: nPath,
+      type: 'file'
+    }));
+    const combinedAttachments = [...currentFiles, ...noteAttachments];
+
+    let finalPrompt = text;
+    if (!finalPrompt && currentNotes.length > 0) {
+      finalPrompt = currentNotes.map(p => `[[${p}]]`).join(', ');
+    }
+
     setInputPrompt('');
     setAttachedFiles([]);
+    setAttachedNotes([]);
+    setIsAttachMenuOpen(false);
 
     await sendMessage(
-      currentText, 
-      currentFiles.length > 0 ? currentFiles.map(f => ({ name: f.name, type: f.type })) : undefined
+      finalPrompt, 
+      combinedAttachments.length > 0 ? combinedAttachments.map(f => ({ name: f.name, type: f.type })) : undefined
     );
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -219,30 +403,58 @@ export const ChatInterface: React.FC = () => {
           type: file.type.startsWith('image/') ? 'image' : file.type.startsWith('audio/') ? 'audio' : 'file' 
         }
       ]);
+      showToast(`Файл прикреплен: ${file.name}`, 'info');
     }
   };
 
-  // Toggle inline voice recording with glowing pulse wave
-  const handleToggleVoiceRecording = () => {
-    if (isInlineRecording) {
-      // Stop recording and transcribe
-      setIsInlineRecording(false);
-      const sampleMemos = [
-        'Спланируй задачи на день: финализировать спецификацию и проверить порт 27124.',
-        'Добавить в заметку Daily/2026-09-28.md задачу протестировать синхронизацию Syncthing.',
-        'Напомнить завтра проверить Caddy TLS сертификат для Obsidian Local REST API.'
-      ];
-      const memoText = sampleMemos[Math.floor(Math.random() * sampleMemos.length)];
-      setInputPrompt(prev => prev ? `${prev} ${memoText}` : memoText);
-      showToast('Groq Whisper STT: Аудио расшифровано и добавлено в поле ввода', 'success', 'whisper-large-v3');
-    } else {
-      setIsInlineRecording(true);
-      setRecordSeconds(0);
-      showToast('Запись голоса активна...', 'info', 'Говорите в микрофон');
+  const insertWikilinkPrompt = () => {
+    setIsAttachMenuOpen(false);
+    const note = prompt("Какую заметку прикрепить? (например: Daily/2026-09-28.md):", "Daily/2026-09-28.md");
+    if (note && note.trim()) {
+      const clean = note.trim();
+      setAttachedNotes(prev => prev.includes(clean) ? prev : [...prev, clean]);
+      showToast(
+        language === 'uk' ? `Нотатку прикріплено: ${clean}` : language === 'en' ? `Attached note: ${clean}` : `Заметка прикреплена: ${clean}`,
+        'info'
+      );
     }
   };
 
-  // Render message content with markdown, interactive tasks and wikilinks
+  const toggleFolder = (folderName: string) => {
+    setCollapsedFolders(prev => ({ ...prev, [folderName]: !prev[folderName] }));
+  };
+
+  // Group Vault Notes by folder
+  const vaultFolders = useMemo(() => {
+    const map: Record<string, string[]> = {
+      Daily: [],
+      Projects: [],
+      Inbox: [],
+      Templates: []
+    };
+
+    Object.keys(notes).forEach(path => {
+      const parts = path.split('/');
+      if (parts.length > 1) {
+        const folder = parts[0];
+        if (!map[folder]) map[folder] = [];
+        map[folder].push(path);
+      } else {
+        if (!map['Root']) map['Root'] = [];
+        map['Root'].push(path);
+      }
+    });
+
+    return map;
+  }, [notes]);
+
+  // Filtered notes based on search query
+  const isPathVisible = (path: string) => {
+    if (!vaultSearchQuery.trim()) return true;
+    return path.toLowerCase().includes(vaultSearchQuery.toLowerCase());
+  };
+
+  // Render message content with markdown, tasks, and wikilinks
   const renderMessageContent = (message: ChatMessage) => {
     const text = message.content;
     const lines = text.split('\n');
@@ -253,14 +465,14 @@ export const ChatInterface: React.FC = () => {
           // Headers
           if (line.startsWith('## ')) {
             return (
-              <h3 key={idx} className="text-base font-bold text-purple-200 mt-3 mb-1">
+              <h3 key={idx} className="text-base font-bold text-zinc-950 dark:text-zinc-50 mt-3 mb-1">
                 {line.replace('## ', '')}
               </h3>
             );
           }
           if (line.startsWith('### ')) {
             return (
-              <h4 key={idx} className="text-sm font-semibold text-purple-300 mt-2 mb-1">
+              <h4 key={idx} className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mt-2 mb-1">
                 {line.replace('### ', '')}
               </h4>
             );
@@ -268,7 +480,7 @@ export const ChatInterface: React.FC = () => {
           // Blockquotes
           if (line.startsWith('> ')) {
             return (
-              <blockquote key={idx} className="border-l-2 border-purple-500/80 pl-3 py-1 my-1 text-obsidian-muted italic text-xs sm:text-sm bg-purple-950/20 rounded-r">
+              <blockquote key={idx} className="border-l-2 border-zinc-400 dark:border-zinc-600 pl-3 py-1 my-1 text-zinc-600 dark:text-zinc-400 italic text-xs sm:text-sm bg-zinc-100/60 dark:bg-zinc-900/60 rounded-r">
                 {line.replace('> ', '')}
               </blockquote>
             );
@@ -289,7 +501,7 @@ export const ChatInterface: React.FC = () => {
 
             const tagMatches = rawTaskContent.match(/#([\w-]+)/g) || [];
 
-            let cleanTaskLabel = rawTaskContent
+            const cleanTaskLabel = rawTaskContent
               .replace(/⏫|🔼|🔽/g, '')
               .replace(/📅\s*\d{4}-\d{2}-\d{2}/g, '')
               .replace(/#([\w-]+)/g, '')
@@ -304,53 +516,53 @@ export const ChatInterface: React.FC = () => {
                 }}
                 className={`task-item flex items-start space-x-2.5 p-2 rounded-lg border cursor-pointer select-none transition-all my-1.5 ${
                   isCompleted 
-                    ? 'bg-obsidian-bg/40 border-obsidian-border/50 text-obsidian-dim' 
-                    : 'bg-obsidian-surface border-obsidian-border hover:border-purple-500/50 text-obsidian-text'
+                    ? 'bg-zinc-100/50 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800 text-zinc-400 dark:text-zinc-500' 
+                    : 'bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-900 dark:text-zinc-100'
                 }`}
               >
                 <button
                   type="button"
                   className={`mt-0.5 rounded transition-colors shrink-0 ${
-                    isCompleted ? 'text-emerald-400' : 'text-purple-400 hover:text-purple-300'
+                    isCompleted ? 'text-zinc-500 dark:text-zinc-400' : 'text-zinc-900 dark:text-zinc-100'
                   }`}
                 >
                   {isCompleted ? (
-                    <CheckSquare className="w-4 h-4 text-emerald-400" />
+                    <CheckSquare className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                   ) : (
-                    <Square className="w-4 h-4 text-purple-400" />
+                    <Square className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
                   )}
                 </button>
 
                 <div className="flex-1 min-w-0">
-                  <span className={`text-xs sm:text-sm font-medium ${isCompleted ? 'line-through text-obsidian-dim' : 'text-white'}`}>
+                  <span className={`text-xs sm:text-sm font-medium ${isCompleted ? 'line-through text-zinc-400 dark:text-zinc-500' : 'text-zinc-950 dark:text-zinc-50'}`}>
                     {cleanTaskLabel}
                   </span>
 
                   {/* Metadata badges row */}
                   <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[11px]">
                     {hasHighPriority && (
-                      <span className="px-1.5 py-0.2 rounded bg-rose-950/60 text-rose-300 border border-rose-800/40 font-semibold flex items-center">
+                      <span className="px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-700 font-semibold flex items-center">
                         {t.priority_high}
                       </span>
                     )}
                     {hasMediumPriority && (
-                      <span className="px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-800/40 flex items-center">
+                      <span className="px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-700 flex items-center">
                         {t.priority_medium}
                       </span>
                     )}
                     {hasLowPriority && (
-                      <span className="px-1.5 py-0.2 rounded bg-blue-950/60 text-blue-300 border border-blue-800/40 flex items-center">
+                      <span className="px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 flex items-center">
                         {t.priority_low}
                       </span>
                     )}
                     {dueDate && (
-                      <span className="px-1.5 py-0.2 rounded bg-purple-950/60 text-purple-300 border border-purple-800/40 flex items-center">
+                      <span className="px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 flex items-center">
                         📅 {dueDate}
                       </span>
                     )}
-                    {tagMatches.map((t, ti) => (
-                      <span key={ti} className="obsidian-tag">
-                        {t}
+                    {tagMatches.map((tag, ti) => (
+                      <span key={ti} className="text-zinc-500 dark:text-zinc-400 text-[10px] font-mono">
+                        {tag}
                       </span>
                     ))}
                   </div>
@@ -374,10 +586,10 @@ export const ChatInterface: React.FC = () => {
                         e.stopPropagation();
                         openNote(target);
                       }}
-                      className="wikilink"
+                      className="inline-flex items-center gap-1 font-mono text-xs px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 hover:border-zinc-500 transition-colors underline decoration-dashed underline-offset-3"
                       title={`Открыть ${target} в Obsidian Vault`}
                     >
-                      <FileText className="w-3.5 h-3.5 text-purple-400 inline" />
+                      <FileText className="w-3 h-3 text-zinc-500 inline" />
                       <span>{target}</span>
                     </button>
                   );
@@ -386,10 +598,10 @@ export const ChatInterface: React.FC = () => {
                 const boldParts = part.split(/(\*\*.*?\*\*)/g);
                 return boldParts.map((bPart, bIdx) => {
                   if (bPart.startsWith('**') && bPart.endsWith('**')) {
-                    return <strong key={bIdx} className="font-semibold text-white">{bPart.slice(2, -2)}</strong>;
+                    return <strong key={bIdx} className="font-semibold text-zinc-950 dark:text-zinc-50">{bPart.slice(2, -2)}</strong>;
                   }
                   if (bPart.startsWith('`') && bPart.endsWith('`')) {
-                    return <code key={bIdx} className="font-mono text-purple-300 bg-purple-950/50 px-1 py-0.5 rounded text-xs border border-purple-800/40">{bPart.slice(1, -1)}</code>;
+                    return <code key={bIdx} className="font-mono text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 px-1 py-0.5 rounded text-xs border border-zinc-200 dark:border-zinc-800">{bPart.slice(1, -1)}</code>;
                   }
                   return bPart;
                 });
@@ -406,9 +618,12 @@ export const ChatInterface: React.FC = () => {
   const yesterdayChats = sessions.filter(s => s.dateGroup === 'yesterday');
   const past7Chats = sessions.filter(s => s.dateGroup === 'past7days');
 
+  const hasMessages = Boolean(activeSession?.messages && activeSession.messages.length > 0);
+
   return (
-    <div className="flex h-screen bg-obsidian-bg text-obsidian-text overflow-hidden font-sans">
-      {/* File input (hidden) */}
+    <div className="flex flex-col h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 overflow-hidden font-sans antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-950 transition-colors duration-150">
+      
+      {/* Hidden file input */}
       <input 
         type="file" 
         ref={fileInputRef} 
@@ -416,535 +631,882 @@ export const ChatInterface: React.FC = () => {
         className="hidden" 
       />
 
-      {/* Main Chat Central Column */}
-      <div className="flex-1 flex flex-col h-full min-w-0 relative">
-        {/* Top Header: Clean, server status icon removed to avoid duplication */}
-        <header className="h-14 border-b border-obsidian-border bg-obsidian-subtle/90 backdrop-blur px-4 sm:px-6 flex items-center justify-between z-10">
-          <div className="flex items-center space-x-3 truncate">
+      {/* ==================== 1. TOP NAVIGATION BAR ==================== */}
+      <header className="h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-4 flex items-center justify-between shrink-0 z-30 transition-colors">
+        
+        {/* Left: Separate Left Shutter Toggle, Back to Landing & Brand */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          
+          {/* Left Shutter Toggle Button (Шторка Vault) */}
+          <button 
+            type="button"
+            onClick={() => setIsLeftSidebarOpen(!isLeftSidebarOpen)} 
+            title="Свернуть / развернуть левую шторку (Vault Explorer)"
+            className={`p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors flex items-center justify-center shadow-2xs ${
+              !isLeftSidebarOpen ? 'opacity-60' : ''
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+              <path d="M9 3v18" strokeWidth="2"/>
+            </svg>
+          </button>
+
+          {/* Back to Landing Link */}
+          <button 
+            type="button"
+            onClick={() => setRoute('/')}
+            className="flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors px-2 py-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-900"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t.landing_btn}</span>
+          </button>
+
+          <span className="text-zinc-300 dark:text-zinc-700 hidden sm:inline">/</span>
+
+          {/* Brand Logo & Platform Title (Vector SVG + ReAct) */}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md overflow-hidden shrink-0 bg-zinc-950 border border-zinc-300 dark:border-zinc-800 flex items-center justify-center p-0.5 shadow-2xs">
+              <svg viewBox="0 0 512 512" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="8" width="496" height="496" rx="108" fill="#121316" stroke="#27272a" strokeWidth="4" />
+                <rect x="36" y="36" width="440" height="440" rx="92" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="63" y="63" width="386" height="386" rx="78" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="90" y="90" width="332" height="332" rx="64" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="117" y="117" width="278" height="278" rx="50" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="144" y="144" width="224" height="224" rx="36" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="171" y="171" width="170" height="170" rx="24" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <polygon points="256,36 476,256 256,476 36,256" fill="#121316" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,63 449,256 256,449 63,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,90 422,256 256,422 90,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,117 395,256 256,395 117,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,144 368,256 256,368 144,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,171 341,256 256,341 171,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,198 314,256 256,314 198,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,206 306,256 256,306 206,256" fill="#121316" stroke="none"/>
+              </svg>
+            </div>
+            <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100 whitespace-nowrap">Obsidian AI Hub</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hidden sm:inline-block">
+              ReAct
+            </span>
+          </div>
+        </div>
+
+        {/* Center: Vault Status Indicator */}
+        <div className="hidden md:flex items-center gap-2 text-xs font-mono text-zinc-500">
+          <span className="w-2 h-2 rounded-full bg-zinc-900 dark:bg-zinc-100"></span>
+          <span>Vault: <strong className="text-zinc-800 dark:text-zinc-200 font-semibold">MainVault (/srv/obsidian)</strong></span>
+        </div>
+
+        {/* Right: Nickname Pill, Theme Switcher & Right Shutter Toggle */}
+        <div className="flex items-center gap-2">
+          
+          {/* User Profile / Nickname Editor Pill */}
+          <button 
+            type="button"
+            onClick={editNickname} 
+            title="Нажмите, чтобы изменить имя пользователя"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors text-xs font-mono text-zinc-700 dark:text-zinc-300 shadow-2xs"
+          >
+            <User className="w-3.5 h-3.5 text-zinc-500" />
+            <span className="font-semibold text-zinc-950 dark:text-zinc-100">{nickname}</span>
+            <span className="text-[10px] text-zinc-400">✎</span>
+          </button>
+
+          {/* Language Switcher Dropdown */}
+          <div className="relative" ref={langMenuRef}>
             <button 
-              onClick={() => setRoute('/')}
-              className="text-xs font-mono text-obsidian-muted hover:text-white flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-obsidian-surface border border-obsidian-border transition-colors shrink-0"
+              type="button"
+              onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
+              title="Сменить язык / Change language"
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors flex items-center gap-1 text-xs font-mono shadow-2xs"
             >
-              <span>{t.landing_btn}</span>
+              <span className="text-sm select-none">
+                {language === 'ru' ? '🇷🇺' : language === 'uk' ? '🇺🇦' : '🇬🇧'}
+              </span>
+              <span className="font-semibold uppercase text-[11px] hidden sm:inline">{language}</span>
+              <span className="text-[10px] text-zinc-400">▾</span>
             </button>
-            <div className="h-4 w-px bg-obsidian-border shrink-0" />
-            <div className="flex items-center space-x-2 truncate">
-              <span className="font-bold text-sm text-white truncate">
-                {activeSession?.title || 'Obsidian Assistant'}
-              </span>
-              <span className="text-[11px] font-mono text-purple-400 bg-purple-950/60 border border-purple-800/40 px-2 py-0.5 rounded-full shrink-0">
-                ReAct Agent
-              </span>
+
+            {isLangMenuOpen && (
+              <div className="absolute top-full mt-2 right-0 w-36 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl font-mono text-xs z-50 text-left animate-fade-in">
+                {[
+                  { code: 'ru', label: 'Русский', flag: '🇷🇺' },
+                  { code: 'uk', label: 'Українська', flag: '🇺🇦' },
+                  { code: 'en', label: 'English', flag: '🇬🇧' },
+                ].map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => {
+                      setLanguage(item.code as any);
+                      setIsLangMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-2.5 py-1.5 rounded flex items-center justify-between transition-colors ${
+                      language === item.code 
+                        ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 font-bold' 
+                        : 'hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{item.flag}</span>
+                      <span>{item.label}</span>
+                    </span>
+                    {language === item.code && <span>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Theme Switcher */}
+          <button 
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+            title="Сменить тему (Светлая / Тёмная)"
+            className="p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors text-xs font-mono shadow-2xs"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
+
+          {/* Separate Right Shutter Toggle Button (История диалогов) */}
+          <button 
+            type="button"
+            onClick={toggleSidebar} 
+            title="Свернуть / развернуть правую шторку (История диалогов)"
+            className={`p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors flex items-center justify-center shadow-2xs ${
+              !isSidebarOpen ? 'opacity-60' : ''
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="2"/>
+              <path d="M15 3v18" strokeWidth="2"/>
+            </svg>
+          </button>
+
+        </div>
+
+      </header>
+
+      {/* ==================== 2. MAIN WORKSPACE AREA ==================== */}
+      <div className="flex-1 flex overflow-hidden relative">
+
+        {/* ==================== LEFT SIDEBAR: OBSIDIAN VAULT EXPLORER ==================== */}
+        <aside 
+          className={`w-64 sm:w-72 border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200 ${
+            isLeftSidebarOpen ? 'translate-x-0' : '-ml-64 sm:-ml-72 hidden'
+          }`}
+        >
+          {/* Vault Explorer Header */}
+          <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-semibold text-zinc-900 dark:text-zinc-100">
+              <svg className="w-4 h-4 text-zinc-700 dark:text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              </svg>
+              <span>Obsidian Vault</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button 
+                type="button"
+                onClick={() => {
+                  const name = prompt("Название новой заметки (например, Daily/2026-11-12.md):");
+                  if (name) showToast(`Заметка [[${name}]] создана в Vault!`, 'success');
+                }} 
+                title="Новая заметка" 
+                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              <button 
+                type="button"
+                onClick={() => {
+                  const folder = prompt("Название новой папки:");
+                  if (folder) showToast(`Папка /${folder} создана!`, 'success');
+                }} 
+                title="Новая папка" 
+                className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 shrink-0">
-            {/* Sidebar Toggle Button */}
-            <button
-              onClick={toggleSidebar}
-              title={isSidebarOpen ? t.sidebar_toggle_hide : t.sidebar_toggle_show}
-              className="w-8 h-8 rounded-lg bg-obsidian-surface hover:bg-obsidian-elevated text-obsidian-muted hover:text-white flex items-center justify-center border border-obsidian-border transition-colors"
-            >
-              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-            </button>
+          {/* Quick Search Filter */}
+          <div className="p-2 border-b border-zinc-200 dark:border-zinc-800">
+            <div className="relative">
+              <input 
+                type="text" 
+                id="vaultSearchInput"
+                value={vaultSearchQuery}
+                onChange={(e) => setVaultSearchQuery(e.target.value)}
+                placeholder="Поиск заметок и файлов (Ctrl+K)..." 
+                className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-md py-1.5 pl-7 pr-2 text-xs font-mono text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-zinc-500"
+              />
+              <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-2 top-2" />
+            </div>
           </div>
-        </header>
 
-        {/* Central Messages Feed (Broadened to max-w-4xl for optimal laptop/desktop display) */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-6 space-y-6">
-          <div className="max-w-4xl mx-auto w-full space-y-6">
-            {/* If chat is clean / empty: render welcoming start screen */}
-            {(!activeSession?.messages || activeSession.messages.length === 0) && !isAgentTyping && (
-              <div className="py-8 sm:py-12 flex flex-col items-center text-center animate-fade-in">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 flex items-center justify-center shadow-xl shadow-purple-950/40 border border-purple-400/30 mb-5">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-                  {t.empty_title}
-                </h2>
-                <p className="text-xs sm:text-sm text-obsidian-muted max-w-lg mb-8 leading-relaxed">
-                  {t.empty_desc}
-                </p>
-
-                {/* 4 Interactive Starter Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 w-full max-w-2xl text-left">
-                  <div
-                    onClick={() => sendMessage(t.starter_prompt_plan)}
-                    className="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border hover:border-purple-500/50 hover:bg-obsidian-elevated/70 cursor-pointer transition-all group shadow-sm"
-                  >
-                    <div className="flex items-center space-x-2 text-purple-400 font-semibold text-xs sm:text-sm mb-1 group-hover:text-purple-300">
-                      <span>🎯</span>
-                      <span>{t.prompt_plan_title}</span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-obsidian-muted leading-relaxed">
-                      {t.prompt_plan_desc}
-                    </p>
-                  </div>
-
-                  <div
-                    onClick={handleToggleVoiceRecording}
-                    className="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border hover:border-cyan-500/50 hover:bg-obsidian-elevated/70 cursor-pointer transition-all group shadow-sm"
-                  >
-                    <div className="flex items-center space-x-2 text-cyan-400 font-semibold text-xs sm:text-sm mb-1 group-hover:text-cyan-300">
-                      <span>🎙️</span>
-                      <span>{t.prompt_voice_title}</span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-obsidian-muted leading-relaxed">
-                      {t.prompt_voice_desc}
-                    </p>
-                  </div>
-
-                  <div
-                    onClick={() => setMultimodalModal('camera')}
-                    className="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border hover:border-indigo-500/50 hover:bg-obsidian-elevated/70 cursor-pointer transition-all group shadow-sm"
-                  >
-                    <div className="flex items-center space-x-2 text-indigo-400 font-semibold text-xs sm:text-sm mb-1 group-hover:text-indigo-300">
-                      <span>📷</span>
-                      <span>{t.prompt_ocr_title}</span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-obsidian-muted leading-relaxed">
-                      {t.prompt_ocr_desc}
-                    </p>
-                  </div>
-
-                  <div
-                    onClick={() => sendMessage(t.starter_prompt_arch)}
-                    className="p-4 rounded-xl bg-obsidian-surface border border-obsidian-border hover:border-emerald-500/50 hover:bg-obsidian-elevated/70 cursor-pointer transition-all group shadow-sm"
-                  >
-                    <div className="flex items-center space-x-2 text-emerald-400 font-semibold text-xs sm:text-sm mb-1 group-hover:text-emerald-300">
-                      <span>🔍</span>
-                      <span>{t.prompt_arch_title}</span>
-                    </div>
-                    <p className="text-[11px] sm:text-xs text-obsidian-muted leading-relaxed">
-                      {t.prompt_arch_desc}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeSession?.messages.map((message) => {
-              const isUser = message.role === 'user';
+          {/* Vault File Tree */}
+          <div className="flex-1 overflow-y-auto p-2 text-xs font-mono space-y-1">
+            {Object.entries(vaultFolders).map(([folderName, files]) => {
+              const visibleFiles = files.filter(isPathVisible);
+              if (vaultSearchQuery.trim() && visibleFiles.length === 0) return null;
+              const isCollapsed = collapsedFolders[folderName];
 
               return (
-                <div 
-                  key={message.id} 
-                  className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full animate-fade-in`}
-                >
-                  {/* Sender Avatar & Time */}
-                  <div className={`flex items-center space-x-2 mb-1.5 ${isUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold ${
-                      isUser 
-                        ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' 
-                        : 'bg-obsidian-surface border border-purple-500/40 text-purple-400 shadow-sm'
-                    }`}>
-                      {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                    </div>
-                    <span className="text-xs font-mono text-obsidian-dim">
-                      {isUser ? t.sender_user : t.sender_assistant} • {message.timestamp}
-                    </span>
-                  </div>
-
-                  {/* ReAct Agent Tool Execution: Compact Accordion */}
-                  {message.toolCalls && message.toolCalls.length > 0 && (
-                    <ToolCallsAccordion 
-                      toolCalls={message.toolCalls} 
-                      openNote={openNote} 
-                    />
-                  )}
-
-                  {/* Message Bubble: Broadened max-width */}
-                  <div 
-                    className={`p-4 sm:p-5 rounded-2xl border text-left shadow-obsidian-card ${
-                      isUser 
-                        ? 'max-w-full sm:max-w-2xl bg-gradient-to-r from-purple-900/40 to-indigo-900/30 border-purple-700/40 text-white rounded-tr-none' 
-                        : 'w-full bg-obsidian-surface border-obsidian-border text-obsidian-text rounded-tl-none'
-                    }`}
+                <div key={folderName} className="vault-folder">
+                  <button 
+                    type="button"
+                    onClick={() => toggleFolder(folderName)} 
+                    className="w-full flex items-center justify-between px-2 py-1.5 rounded hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 text-zinc-800 dark:text-zinc-200 group text-left transition-colors"
                   >
-                    {/* Attachments */}
-                    {message.attachments && message.attachments.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3 pb-2.5 border-b border-obsidian-border/60">
-                        {message.attachments.map((att, attIdx) => (
-                          <div key={attIdx} className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-obsidian-bg/80 border border-obsidian-border text-xs font-mono text-purple-300">
-                            {att.type === 'audio' ? <Mic className="w-3.5 h-3.5 text-purple-400" /> : <FileText className="w-3.5 h-3.5 text-cyan-400" />}
-                            <span>{att.name}</span>
-                            {att.size && <span className="text-obsidian-dim">({att.size})</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="text-zinc-400 text-[10px]">{isCollapsed ? '▶' : '▼'}</span>
+                      <svg className="w-3.5 h-3.5 text-zinc-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                      </svg>
+                      <span className="font-medium truncate">{folderName}</span>
+                    </div>
+                    <span className="text-[10px] text-zinc-400 shrink-0">{files.length}</span>
+                  </button>
 
-                    {renderMessageContent(message)}
-                  </div>
+                  {!isCollapsed && (
+                    <div className="pl-4 space-y-0.5 mt-0.5">
+                      {visibleFiles.map(filePath => {
+                        const filename = filePath.split('/').pop() || filePath;
+                        const isToday = filePath.includes('2026-09-28') || filePath.includes('2026-11-10');
+
+                        return (
+                          <div 
+                            key={filePath}
+                            draggable={true}
+                            onDragStart={(e) => handleDragStartNote(e, filePath)}
+                            onClick={() => openNote(filePath)}
+                            title={language === 'uk' ? 'Перетягніть у рядок чату або натисніть для перегляду' : language === 'en' ? 'Drag to chat or click to view' : 'Перетащите в строку чата или нажмите для просмотра'}
+                            className="flex items-center justify-between px-2 py-1 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 cursor-grab active:cursor-grabbing text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors group select-none"
+                          >
+                            <div className="flex items-center gap-1.5 truncate">
+                              <span className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] select-none">⋮⋮</span>
+                              <FileText className="w-3 h-3 text-zinc-400 shrink-0 group-hover:text-zinc-900 dark:group-hover:text-zinc-100" />
+                              <span className="truncate">{filename}</span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {isToday && (
+                                <span className="text-[9px] text-zinc-400 border border-zinc-200 dark:border-zinc-800 rounded px-1 shrink-0">Today</span>
+                              )}
+                              <span className="text-[9px] font-mono text-zinc-400 opacity-0 group-hover:opacity-80 transition-opacity hidden sm:inline" title="Перетащите">
+                                ↗
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
-
-            {/* Agent Typing / Action Indicator */}
-            {isAgentTyping && (
-              <div className="flex flex-col items-start w-full animate-fade-in">
-                <div className="flex items-center space-x-2 mb-1.5">
-                  <div className="w-7 h-7 rounded-lg bg-obsidian-surface border border-purple-500/40 text-purple-400 flex items-center justify-center">
-                    <Bot className="w-4 h-4 animate-spin" />
-                  </div>
-                  <span className="text-xs font-mono text-purple-400">
-                    {currentAgentAction || t.agent_thinking}
-                  </span>
-                </div>
-                <div className="w-full p-4 rounded-2xl bg-obsidian-surface border border-obsidian-border rounded-tl-none flex items-center space-x-2 text-xs font-mono text-obsidian-muted">
-                  <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
-                  <span>{t.agent_calling_api}</span>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
           </div>
-        </div>
 
-        {/* Suggested Quick Prompt Chips (Centered max-w-4xl, single-row guaranteed) */}
-        <div className="px-3 sm:px-6 lg:px-8 py-2 w-full shrink-0">
-          <div className="max-w-4xl mx-auto flex items-center justify-between gap-1 sm:gap-2 w-full overflow-hidden no-scrollbar">
-            <button
-              onClick={() => sendMessage(t.starter_prompt_plan)}
-              className="flex-auto flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-obsidian-surface hover:bg-obsidian-elevated border border-purple-500/35 hover:border-purple-500/70 text-purple-200 hover:text-white transition-all text-[10.5px] sm:text-[11px] lg:text-xs font-medium tracking-tight whitespace-nowrap shadow-xs"
+          {/* Left Sidebar Footer: Vault Quick Stats */}
+          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 text-[11px] font-mono text-zinc-500 flex items-center justify-between">
+            <span>{Object.keys(notes).length} файлов • 4 папки</span>
+            <button 
+              type="button"
+              onClick={() => showToast("Синхронизация дерева хранилища выполнена", 'info')} 
+              title="Синхронизировать файлы" 
+              className="hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors"
             >
-              <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-400 shrink-0" />
-              <span>{t.prompt_plan_title}</span>
-            </button>
-
-            <button
-              onClick={handleToggleVoiceRecording}
-              className="flex-auto flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-obsidian-surface hover:bg-obsidian-elevated border border-cyan-500/35 hover:border-cyan-500/70 text-cyan-200 hover:text-white transition-all text-[10.5px] sm:text-[11px] lg:text-xs font-medium tracking-tight whitespace-nowrap shadow-xs"
-            >
-              <Mic className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400 shrink-0" />
-              <span>{t.prompt_voice_title}</span>
-            </button>
-
-            <button
-              onClick={() => setMultimodalModal('camera')}
-              className="flex-auto flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-obsidian-surface hover:bg-obsidian-elevated border border-indigo-500/35 hover:border-indigo-500/70 text-indigo-200 hover:text-white transition-all text-[10.5px] sm:text-[11px] lg:text-xs font-medium tracking-tight whitespace-nowrap shadow-xs"
-            >
-              <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-400 shrink-0" />
-              <span>{t.prompt_ocr_title}</span>
-            </button>
-
-            <button
-              onClick={() => sendMessage(t.starter_prompt_arch)}
-              className="flex-auto flex items-center justify-center space-x-1 sm:space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-obsidian-surface hover:bg-obsidian-elevated border border-emerald-500/35 hover:border-emerald-500/70 text-emerald-200 hover:text-white transition-all text-[10.5px] sm:text-[11px] lg:text-xs font-medium tracking-tight whitespace-nowrap shadow-xs"
-            >
-              <Search className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
-              <span>{t.prompt_arch_title}</span>
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
-        </div>
 
-        {/* Input Bar Pinned at Bottom (Centered max-w-4xl) */}
-        <div className="p-4 sm:px-8 lg:px-12 border-t border-obsidian-border bg-obsidian-subtle/80 backdrop-blur">
-          <div className="max-w-4xl mx-auto">
-            {/* Attached file tags */}
-            {attachedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {attachedFiles.map((file, idx) => (
-                  <span key={idx} className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-obsidian-surface border border-purple-500/40 text-xs font-mono text-purple-300">
-                    <FileText className="w-3 h-3 text-purple-400" />
-                    <span>{file.name}</span>
-                    <button 
-                      onClick={() => setAttachedFiles(prev => prev.filter((_, i) => i !== idx))}
-                      className="ml-1 text-obsidian-dim hover:text-rose-400"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+        </aside>
 
-            {/* Active Voice Recording Soundwave Banner (Vibrant pulsating effect) */}
-            {isInlineRecording && (
-              <div className="mb-2 p-2.5 rounded-xl bg-gradient-to-r from-rose-950/70 via-purple-950/60 to-obsidian-surface border border-rose-500/50 flex items-center justify-between text-xs font-mono animate-fade-in shadow-lg shadow-rose-950/20">
-                <div className="flex items-center space-x-3">
-                  <span className="w-3 h-3 rounded-full bg-rose-500 animate-ping shrink-0" />
-                  <span className="text-rose-400 font-bold uppercase tracking-wider">
-                    ● {t.recording_now} 00:{recordSeconds < 10 ? '0' : ''}{recordSeconds}
-                  </span>
-                  
-                  {/* Pulsating equalizer soundwave */}
-                  <div className="flex items-center space-x-1 h-4 px-2">
-                    {[35, 80, 100, 60, 90, 50, 85, 95, 40, 75, 100, 55].map((h, i) => (
-                      <div
-                        key={i}
-                        className="w-1 bg-gradient-to-t from-rose-500 via-purple-400 to-cyan-400 rounded-full soundwave-bar"
-                        style={{
-                          height: `${h}%`,
-                          animationDelay: `${i * 0.08}s`
-                        }}
+        {/* ==================== CENTER AREA: GEMINI-STYLE MINIMALIST CHAT ==================== */}
+        <main 
+          onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+          onDrop={handleDropOnInput}
+          className="flex-1 flex flex-col h-full bg-white dark:bg-zinc-950 relative overflow-hidden transition-colors"
+        >
+          
+          {/* Subtle Technical Grid (Strict monochrome, NO glow/auras) */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#e4e4e7_1px,transparent_1px),linear-gradient(to_bottom,#e4e4e7_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] opacity-30 dark:opacity-20 pointer-events-none"></div>
+
+          {/* Dialogue History Stream (Rendered once active conversation has messages) */}
+          {hasMessages ? (
+            <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-6 max-w-4xl mx-auto w-full z-10">
+              
+              {activeSession?.messages.map((message) => {
+                const isUser = message.role === 'user';
+
+                return (
+                  <div 
+                    key={message.id} 
+                    className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full animate-fade-in`}
+                  >
+                    {/* Sender Avatar & Time */}
+                    <div className={`flex items-center gap-2 mb-1.5 ${isUser ? 'flex-row-reverse' : ''}`}>
+                      <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold border ${
+                        isUser 
+                          ? 'bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 border-zinc-950 dark:border-zinc-100' 
+                          : 'bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300'
+                      }`}>
+                        {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                      </div>
+                      <span className="text-[11px] font-mono text-zinc-400">
+                        {isUser ? nickname : 'Obsidian AI Hub'} • {message.timestamp}
+                      </span>
+                    </div>
+
+                    {/* ReAct Tool Calling Accordion */}
+                    {message.toolCalls && message.toolCalls.length > 0 && (
+                      <ToolCallsAccordion 
+                        toolCalls={message.toolCalls} 
+                        openNote={openNote} 
                       />
-                    ))}
+                    )}
+
+                    {/* Message Bubble: Clean Monochrome */}
+                    <div 
+                      className={`p-4 rounded-2xl border text-left shadow-2xs font-sans text-sm ${
+                        isUser 
+                          ? 'max-w-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 border-zinc-950 dark:border-zinc-100 rounded-tr-none' 
+                          : 'w-full bg-zinc-50 dark:bg-zinc-900/70 border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none'
+                      }`}
+                    >
+                      {/* Attachments */}
+                      {message.attachments && message.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3 pb-2.5 border-b border-zinc-200 dark:border-zinc-800">
+                          {message.attachments.map((att, attIdx) => (
+                            <div key={attIdx} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-xs font-mono text-zinc-700 dark:text-zinc-300">
+                              <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                              <span>{att.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {renderMessageContent(message)}
+                    </div>
+
+                  </div>
+                );
+              })}
+
+              {/* Agent Thinking Indicator */}
+              {isAgentTyping && (
+                <div className="flex flex-col items-start w-full animate-fade-in">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-6 h-6 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 flex items-center justify-center">
+                      <Bot className="w-3.5 h-3.5 animate-spin" />
+                    </div>
+                    <span className="text-xs font-mono text-zinc-500">
+                      {currentAgentAction || t.agent_thinking}
+                    </span>
+                  </div>
+                  <div className="w-full p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-tl-none flex items-center gap-2 text-xs font-mono text-zinc-500">
+                    <span className="w-2 h-2 rounded-full bg-zinc-900 dark:bg-zinc-100 animate-ping" />
+                    <span>{t.agent_calling_api}</span>
                   </div>
                 </div>
+              )}
 
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={handleToggleVoiceRecording}
-                    className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-medium flex items-center space-x-1 transition-colors shadow-sm text-xs"
-                  >
-                    <StopCircle className="w-3.5 h-3.5" />
-                    <span>{t.stop_transcribe_btn}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsInlineRecording(false)}
-                    className="p-1 rounded text-obsidian-muted hover:text-white"
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleSend} className="relative bg-obsidian-surface border border-obsidian-border focus-within:border-purple-500 rounded-2xl p-2 transition-colors shadow-lg">
-              <textarea
-                value={inputPrompt}
-                onChange={(e) => setInputPrompt(e.target.value)}
-                onKeyDown={handleKeyDown}
-                rows={2}
-                placeholder={t.input_placeholder}
-                className="w-full bg-transparent text-sm text-white placeholder-obsidian-dim px-3 py-1.5 focus:outline-none resize-none leading-relaxed"
-              />
-
-              <div className="flex items-center justify-between pt-1 border-t border-obsidian-border/50 px-2">
-                {/* Multimodal Quick Buttons */}
-                <div className="flex items-center space-x-1 sm:space-x-2">
-                  <button
-                    type="button"
-                    onClick={handleToggleVoiceRecording}
-                    title={t.tooltip_voice}
-                    className={`p-2 rounded-xl transition-all flex items-center space-x-1.5 text-xs ${
-                      isInlineRecording
-                        ? 'bg-rose-950/80 border border-rose-500/80 text-rose-300 shadow-md shadow-rose-950/40 animate-pulse'
-                        : 'text-obsidian-muted hover:text-purple-400 hover:bg-obsidian-elevated'
-                    }`}
-                  >
-                    <Mic className={`w-4 h-4 ${isInlineRecording ? 'text-rose-400 animate-bounce' : ''}`} />
-                    <span className="hidden sm:inline">
-                      {isInlineRecording ? t.recording_now : t.voice_btn}
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMultimodalModal('camera')}
-                    title={t.tooltip_ocr}
-                    className="p-2 rounded-xl text-obsidian-muted hover:text-cyan-400 hover:bg-obsidian-elevated transition-colors flex items-center space-x-1 text-xs"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t.ocr_btn}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    title={t.tooltip_file}
-                    className="p-2 rounded-xl text-obsidian-muted hover:text-white hover:bg-obsidian-elevated transition-colors flex items-center space-x-1 text-xs"
-                  >
-                    <Paperclip className="w-4 h-4" />
-                    <span className="hidden sm:inline">{t.file_btn}</span>
-                  </button>
-                </div>
-
-                {/* Send Button */}
-                <button
-                  type="submit"
-                  disabled={isAgentTyping || (!inputPrompt.trim() && attachedFiles.length === 0)}
-                  className={`px-4 py-2 rounded-xl font-medium text-xs sm:text-sm flex items-center space-x-1.5 transition-all shadow-md ${
-                    isAgentTyping || (!inputPrompt.trim() && attachedFiles.length === 0)
-                      ? 'bg-obsidian-elevated text-obsidian-dim cursor-not-allowed border border-obsidian-border'
-                      : 'bg-obsidian-purple hover:bg-obsidian-purple-hover text-white shadow-purple-900/40 hover:scale-[1.02] active:scale-[0.98]'
-                  }`}
+              <div ref={messagesEndRef} />
+            </div>
+          ) : (
+            /* Center Welcome Screen: Inspired by Gemini, Strictly Monochrome, No Glow */
+            <div className="flex-1 flex flex-col items-center justify-center px-4 max-w-3xl mx-auto w-full z-10 text-center my-auto">
+              
+              {/* Dynamic Greeting Header with Nickname & Visible Shuffle Button */}
+              <div className="mb-8 flex items-center justify-center gap-3">
+                <h1 
+                  onClick={cycleGreeting}
+                  title="Кликните, чтобы сменить приветствие"
+                  className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50 leading-tight cursor-pointer select-none hover:opacity-90 transition-opacity"
                 >
-                  <span>{t.send_btn}</span>
-                  <Send className="w-3.5 h-3.5" />
+                  {greetingsPool[greetingIndex]}
+                </h1>
+                
+                <button 
+                  type="button"
+                  onClick={cycleGreeting} 
+                  title="Сменить фразу приветствия"
+                  className="w-8 h-8 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all flex items-center justify-center shadow-2xs shrink-0"
+                >
+                  <RefreshCw className="w-4 h-4" />
                 </button>
               </div>
-            </form>
+
+              {/* Minimalist Gemini-Style Input Capsule (Monochrome, No Glow, Drag & Drop Enabled) */}
+              <div className="w-full relative">
+                {/* Dragging over indicator pill */}
+                {isDragOverInput && (
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-mono font-semibold shadow-xl border border-zinc-700 animate-bounce flex items-center gap-2 z-30 pointer-events-none">
+                    <span>📥</span>
+                    <span>{language === 'uk' ? 'Відпустіть файл, щоб прикріпити до запиту' : language === 'en' ? 'Drop file to attach to prompt' : 'Отпустите файл, чтобы прикрепить к запросу'}</span>
+                  </div>
+                )}
+
+                {/* Attached Notes Chips (from drag & drop or wikilink) */}
+                {attachedNotes.length > 0 && (
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5 px-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100/90 dark:bg-zinc-900/90 font-mono text-xs text-left shadow-2xs">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+                      {language === 'uk' ? 'Прикріплено:' : language === 'en' ? 'Attached:' : 'Прикреплено:'}
+                    </span>
+                    {attachedNotes.map((path) => (
+                      <span 
+                        key={path}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs shadow-2xs"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                        <button 
+                          type="button" 
+                          onClick={() => openNote(path)} 
+                          className="hover:underline font-medium"
+                          title="Открыть заметку"
+                        >
+                          {path}
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => removeAttachedNote(path)} 
+                          className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 ml-0.5 p-0.5 font-bold"
+                          title="Удалить прикрепление"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div 
+                  onDragOver={handleDragOverInput}
+                  onDragLeave={handleDragLeaveInput}
+                  onDrop={handleDropOnInput}
+                  className={`relative flex items-center rounded-2xl border shadow-sm transition-all p-1.5 sm:p-2 ${
+                    isDragOverInput 
+                      ? 'border-dashed border-2 border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800/90 ring-2 ring-zinc-400/50' 
+                      : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-900/80 hover:border-zinc-400 dark:hover:border-zinc-600 focus-within:border-zinc-900 dark:focus-within:border-zinc-100'
+                  }`}
+                >
+                  
+                  {/* Plus Action Button (Attach / Wikilink) */}
+                  <div className="relative" ref={attachMenuRef}>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsAttachMenuOpen(!isAttachMenuOpen);
+                        setIsModelMenuOpen(false);
+                      }} 
+                      title="Прикрепить заметку, аудио или файл" 
+                      className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+
+                    {/* Attach Dropdown Menu (Positioned cleanly below the capsule) */}
+                    {isAttachMenuOpen && (
+                      <div className="absolute top-full mt-2 left-0 w-60 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl font-mono text-xs z-50 text-left animate-fade-in">
+                        <button 
+                          type="button" 
+                          onClick={insertWikilinkPrompt} 
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2.5 text-zinc-800 dark:text-zinc-200 transition-colors"
+                        >
+                          <FileText className="w-4 h-4 text-zinc-500" />
+                          <span>Вставить [[Заметку]]</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setIsAttachMenuOpen(false);
+                            setMultimodalModal('voice');
+                          }} 
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2.5 text-zinc-800 dark:text-zinc-200 transition-colors"
+                        >
+                          <Mic className="w-4 h-4 text-zinc-500" />
+                          <span>Голосовая заметка (STT)</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setIsAttachMenuOpen(false);
+                            setMultimodalModal('camera');
+                          }} 
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2.5 text-zinc-800 dark:text-zinc-200 transition-colors"
+                        >
+                          <Camera className="w-4 h-4 text-zinc-500" />
+                          <span>Скан документа (OCR)</span>
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setIsAttachMenuOpen(false);
+                            fileInputRef.current?.click();
+                          }} 
+                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center gap-2.5 text-zinc-800 dark:text-zinc-200 transition-colors"
+                        >
+                          <Paperclip className="w-4 h-4 text-zinc-500" />
+                          <span>Прикрепить файл</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Main Input Field */}
+                  <input 
+                    ref={inputRef}
+                    type="text" 
+                    value={inputPrompt}
+                    onChange={(e) => setInputPrompt(e.target.value)}
+                    onClick={() => {
+                      setIsAttachMenuOpen(false);
+                      setIsModelMenuOpen(false);
+                    }}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder={
+                      language === 'uk' 
+                        ? 'Запитати Obsidian AI або ввести команду...' 
+                        : language === 'en'
+                        ? 'Ask Obsidian AI or enter a command...'
+                        : 'Спросить Obsidian AI или ввести команду...'
+                    }
+                    className="flex-1 bg-transparent px-3 py-2 text-sm sm:text-base text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none"
+                  />
+
+                  {/* Model Selection Dropdown */}
+                  <div className="relative shrink-0" ref={modelMenuRef}>
+                    <button 
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsModelMenuOpen(!isModelMenuOpen);
+                        setIsAttachMenuOpen(false);
+                      }} 
+                      className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors shadow-2xs"
+                    >
+                      <span>{selectedModel}</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                    </button>
+
+                    {isModelMenuOpen && (
+                      <div className="absolute top-full mt-2 right-0 w-52 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-1.5 shadow-2xl font-mono text-xs z-50 text-left animate-fade-in">
+                        {['Flash Средний (Groq)', 'Gemini 2.0 Flash', 'Local ReAct :27124', 'Ollama (llama3.2)'].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => {
+                              setSelectedModel(m);
+                              setIsModelMenuOpen(false);
+                              showToast(`Модель переключена: ${m}`, 'info');
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 transition-colors"
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Voice Mic Button */}
+                  <button 
+                    type="button"
+                    onClick={() => setMultimodalModal('voice')} 
+                    title="Голосовой ввод (Groq Whisper STT)"
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 hover:bg-zinc-200/70 dark:hover:bg-zinc-800/70 transition-colors shrink-0"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+
+                  {/* Send Button */}
+                  <button 
+                    type="button"
+                    onClick={() => handleSend()} 
+                    title="Отправить сообщение (Enter)"
+                    className="w-9 h-9 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shadow-xs shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {/* Bottom Pinned Input Bar (Visible only when conversation is active, Drag & Drop Enabled) */}
+          {hasMessages && (
+            <div className="border-t border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md p-3 sm:p-4 shrink-0 z-20">
+              <div className="max-w-4xl mx-auto space-y-2">
+                
+                {/* Dragging over indicator pill */}
+                {isDragOverInput && (
+                  <div className="px-3 py-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-xs font-mono font-semibold text-center border border-zinc-700 animate-pulse">
+                    📥 {language === 'uk' ? 'Відпустіть файл для прикріплення до запиту' : language === 'en' ? 'Drop file to attach to prompt' : 'Отпустите файл для прикрепления к запросу'}
+                  </div>
+                )}
+
+                {/* Attached Notes Chips in Bottom Bar */}
+                {attachedNotes.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+                      {language === 'uk' ? 'Прикріплено:' : language === 'en' ? 'Attached:' : 'Прикреплено:'}
+                    </span>
+                    {attachedNotes.map((path) => (
+                      <span 
+                        key={path}
+                        className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 text-xs shadow-2xs"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                        <button type="button" onClick={() => openNote(path)} className="hover:underline font-medium">
+                          {path}
+                        </button>
+                        <button type="button" onClick={() => removeAttachedNote(path)} className="text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 ml-0.5 font-bold">
+                          ✕
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <div 
+                  onDragOver={handleDragOverInput}
+                  onDragLeave={handleDragLeaveInput}
+                  onDrop={handleDropOnInput}
+                  className={`flex items-center gap-2 p-1 rounded-xl transition-all ${
+                    isDragOverInput ? 'border-dashed border-2 border-zinc-900 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800/80 ring-2 ring-zinc-400/50' : ''
+                  }`}
+                >
+                  <button 
+                    type="button" 
+                    onClick={insertWikilinkPrompt} 
+                    title="Прикрепить заметку" 
+                    className="p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors shrink-0"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+
+                  <input 
+                    ref={bottomInputRef}
+                    type="text" 
+                    value={inputPrompt}
+                    onChange={(e) => setInputPrompt(e.target.value)}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder={
+                      language === 'uk' 
+                        ? 'Запитати асистента або ввести команду...' 
+                        : language === 'en'
+                        ? 'Ask assistant or enter a command...'
+                        : 'Спросить ассистента или ввести команду...'
+                    }
+                    className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 focus:outline-none focus:border-zinc-400 font-sans"
+                  />
+
+                  <button 
+                    type="button" 
+                    onClick={() => setMultimodalModal('voice')} 
+                    title="Голос" 
+                    className="p-2 rounded-lg text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors shrink-0"
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={() => handleSend()} 
+                    title="Отправить" 
+                    className="px-4 py-2 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors shrink-0 shadow-xs"
+                  >
+                    {t.send_btn}
+                  </button>
+
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+
+        {/* ==================== 3. RIGHT SIDEBAR: CHAT HISTORY & VAULT SHORTCUTS ==================== */}
+        <aside 
+          className={`w-64 sm:w-72 border-l border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 flex flex-col shrink-0 transition-all duration-200 ${
+            isSidebarOpen ? 'translate-x-0' : '-mr-64 sm:-mr-72 hidden'
+          }`}
+        >
+          {/* History Header with compact + button (NO big button on top) */}
+          <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-600 dark:text-zinc-400 font-semibold">
+              {t.chat_history}
+            </span>
+            <button 
+              type="button"
+              onClick={handleCreateNewChat} 
+              title="Начать новый диалог" 
+              className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors flex items-center gap-1 text-xs font-mono"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+
+          {/* Dialogue History List */}
+          <div className="flex-1 overflow-y-auto p-3 text-xs space-y-4">
+            
+            {/* Group: Сегодня */}
+            {todayChats.length > 0 && (
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5 font-semibold">
+                  {t.today}
+                </div>
+                <div className="space-y-1">
+                  {todayChats.map(s => (
+                    <div 
+                      key={s.id}
+                      onClick={() => selectChat(s.id)} 
+                      className={`group p-2 rounded-lg cursor-pointer shadow-2xs flex items-center justify-between transition-colors ${
+                        s.id === activeSession?.id
+                          ? 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 font-medium'
+                          : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400'
+                      }`}
+                    >
+                      <span className="truncate flex-1 pr-1">{s.title}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {s.id === activeSession?.id && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-zinc-900 dark:bg-zinc-100"></span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
+                          className="opacity-0 group-hover:opacity-100 p-0.5 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-opacity"
+                          title="Удалить диалог"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Group: Вчера */}
+            {yesterdayChats.length > 0 && (
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5 font-semibold">
+                  {t.yesterday}
+                </div>
+                <div className="space-y-1">
+                  {yesterdayChats.map(s => (
+                    <div 
+                      key={s.id}
+                      onClick={() => selectChat(s.id)} 
+                      className={`group p-2 rounded-lg cursor-pointer transition-colors flex items-center justify-between ${
+                        s.id === activeSession?.id
+                          ? 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 font-medium'
+                          : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400'
+                      }`}
+                    >
+                      <span className="truncate flex-1 pr-1">{s.title}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-opacity"
+                        title="Удалить диалог"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Group: Прошлые 7 дней */}
+            {past7Chats.length > 0 && (
+              <div>
+                <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5 font-semibold">
+                  {t.past7days}
+                </div>
+                <div className="space-y-1">
+                  {past7Chats.map(s => (
+                    <div 
+                      key={s.id}
+                      onClick={() => selectChat(s.id)} 
+                      className={`group p-2 rounded-lg cursor-pointer transition-colors flex items-center justify-between ${
+                        s.id === activeSession?.id
+                          ? 'bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-950 dark:text-zinc-100 font-medium'
+                          : 'hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400'
+                      }`}
+                    >
+                      <span className="truncate flex-1 pr-1">{s.title}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-opacity"
+                        title="Удалить диалог"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quick Access to Vault Notes */}
+            <div className="pt-3 border-t border-zinc-200 dark:border-zinc-800">
+              <div className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 mb-1.5 font-semibold flex items-center justify-between">
+                <span>{t.quick_vault_title}</span>
+                <span className="text-zinc-400">{Object.keys(notes).length} файла</span>
+              </div>
+              <div className="space-y-1 font-mono text-[11px]">
+                {Object.values(notes).slice(0, 5).map(n => (
+                  <div 
+                    key={n.path}
+                    draggable={true}
+                    onDragStart={(e) => handleDragStartNote(e, n.path)}
+                    onClick={() => openNote(n.path)} 
+                    title={language === 'uk' ? 'Перетягніть у рядок чату або натисніть для перегляду' : language === 'en' ? 'Drag to chat or click to view' : 'Перетащите в строку чата или нажмите для просмотра'}
+                    className="p-1.5 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 flex items-center justify-between cursor-grab active:cursor-grabbing text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors group select-none"
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="text-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] select-none">⋮⋮</span>
+                      <FileText className="w-3 h-3 text-zinc-400 shrink-0 group-hover:text-zinc-900 dark:group-hover:text-zinc-100" />
+                      <span className="truncate">{n.path}</span>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-zinc-400 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Right Sidebar Footer: Settings Button */}
+          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800">
+            {/* Settings Button */}
+            <button 
+              type="button"
+              onClick={() => setRoute('/settings')} 
+              className="w-full py-2 px-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors text-xs font-mono flex items-center justify-center gap-2 text-zinc-700 dark:text-zinc-300 shadow-2xs"
+            >
+              <SettingsIcon className="w-3.5 h-3.5 text-zinc-500" />
+              <span>{t.settings_btn} (/settings)</span>
+            </button>
+          </div>
+
+        </aside>
+
       </div>
 
-      {/* Right Drawer (Sidebar) */}
-      <aside 
-        className={`fixed inset-y-0 right-0 z-30 sm:static sm:z-auto w-80 bg-obsidian-subtle border-l border-obsidian-border flex flex-col transition-transform duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : 'translate-x-full sm:hidden'
-        }`}
-      >
-        {/* Drawer Header with "+ Новый диалог" button */}
-        <div className="p-4 border-b border-obsidian-border flex items-center justify-between">
-          <button
-            onClick={createNewChat}
-            className="flex-1 py-2.5 px-3 rounded-xl bg-obsidian-purple hover:bg-obsidian-purple-hover text-white font-medium text-xs sm:text-sm flex items-center justify-center space-x-2 transition-all shadow-md shadow-purple-900/30"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{t.new_chat}</span>
-          </button>
-
-          <button
-            onClick={toggleSidebar}
-            className="sm:hidden ml-2 w-9 h-9 rounded-xl bg-obsidian-surface border border-obsidian-border flex items-center justify-center text-obsidian-muted hover:text-white"
-          >
-            <PanelRightClose className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Drawer Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {/* Chat History Grouped by Date */}
-          <div>
-            <h4 className="text-xs font-mono font-semibold text-obsidian-dim uppercase tracking-wider mb-2.5">
-              {t.chat_history}
-            </h4>
-
-            {/* Today */}
-            {todayChats.length > 0 && (
-              <div className="space-y-1 mb-4">
-                <span className="text-[11px] font-mono text-purple-400 block px-2 mb-1">
-                  {t.today}
-                </span>
-                {todayChats.map(s => (
-                  <div
-                    key={s.id}
-                    onClick={() => selectChat(s.id)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                      s.id === activeSession?.id
-                        ? 'bg-obsidian-surface border border-purple-500/50 text-white shadow-sm'
-                        : 'text-obsidian-muted hover:bg-obsidian-elevated hover:text-white'
-                    }`}
-                  >
-                    <span className="truncate flex-1 pr-2">{s.title}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-obsidian-dim hover:text-rose-400 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Yesterday */}
-            {yesterdayChats.length > 0 && (
-              <div className="space-y-1 mb-4">
-                <span className="text-[11px] font-mono text-obsidian-dim block px-2 mb-1">
-                  {t.yesterday}
-                </span>
-                {yesterdayChats.map(s => (
-                  <div
-                    key={s.id}
-                    onClick={() => selectChat(s.id)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                      s.id === activeSession?.id
-                        ? 'bg-obsidian-surface border border-purple-500/50 text-white shadow-sm'
-                        : 'text-obsidian-muted hover:bg-obsidian-elevated hover:text-white'
-                    }`}
-                  >
-                    <span className="truncate flex-1 pr-2">{s.title}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-obsidian-dim hover:text-rose-400 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Past 7 days */}
-            {past7Chats.length > 0 && (
-              <div className="space-y-1">
-                <span className="text-[11px] font-mono text-obsidian-dim block px-2 mb-1">
-                  {t.past7days}
-                </span>
-                {past7Chats.map(s => (
-                  <div
-                    key={s.id}
-                    onClick={() => selectChat(s.id)}
-                    className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                      s.id === activeSession?.id
-                        ? 'bg-obsidian-surface border border-purple-500/50 text-white shadow-sm'
-                        : 'text-obsidian-muted hover:bg-obsidian-elevated hover:text-white'
-                    }`}
-                  >
-                    <span className="truncate flex-1 pr-2">{s.title}</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteChat(s.id); }}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-obsidian-dim hover:text-rose-400 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Access to Vault Section */}
-          <div className="pt-4 border-t border-obsidian-border/70">
-            <h4 className="text-xs font-mono font-semibold text-obsidian-dim uppercase tracking-wider mb-2.5 flex items-center justify-between">
-              <span>{t.quick_vault_title}</span>
-              <span className="text-[10px] text-purple-400">{Object.keys(notes).length} files</span>
-            </h4>
-
-            <div className="space-y-1.5 font-mono text-xs">
-              {Object.values(notes).map((n) => (
-                <div
-                  key={n.path}
-                  onClick={() => openNote(n.path)}
-                  className="flex items-center justify-between p-2 rounded-xl bg-obsidian-bg/80 hover:bg-obsidian-surface border border-obsidian-border hover:border-purple-500/40 text-obsidian-muted hover:text-white cursor-pointer transition-all"
-                >
-                  <div className="flex items-center space-x-2 truncate">
-                    <FileText className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                    <span className="truncate">{n.path}</span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-obsidian-dim shrink-0" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Drawer Footer: Sole Server Status & Link to Settings */}
-        <div className="p-4 border-t border-obsidian-border bg-obsidian-bg/90 space-y-3">
-          {/* Connection status indicator (Format: ● REST Hub: Online :27124 (14ms)) */}
-          <div className="flex items-center justify-between text-xs font-mono px-1">
-            <div className="flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-              <span className="text-emerald-400 font-semibold">{t.rest_hub_status_online}</span>
-            </div>
-            <span className="text-obsidian-muted text-[11px] font-mono">:27124 (14ms)</span>
-          </div>
-
-          {/* Settings Button */}
-          <button
-            onClick={() => setRoute('/settings')}
-            className="w-full py-2.5 px-3 rounded-xl bg-obsidian-surface hover:bg-obsidian-elevated text-obsidian-text hover:text-white border border-obsidian-border hover:border-purple-500/40 text-xs font-medium flex items-center justify-center space-x-2 transition-colors shadow-sm"
-          >
-            <SettingsIcon className="w-4 h-4 text-purple-400" />
-            <span>{t.settings_btn}</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* Backdrop for mobile drawer */}
-      {isSidebarOpen && (
-        <div 
-          onClick={toggleSidebar} 
-          className="fixed inset-0 bg-black/60 z-20 sm:hidden"
-        />
-      )}
     </div>
   );
 };
+
+export default ChatInterface;

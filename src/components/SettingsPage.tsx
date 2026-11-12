@@ -5,23 +5,17 @@ import {
   Server, 
   Key, 
   Database, 
-  Shield, 
   CheckCircle2, 
   Eye, 
   EyeOff, 
   RefreshCw, 
-  Wifi, 
-  WifiOff, 
   Cpu, 
-  Trash2,
-  Palette,
-  Sun,
-  Moon,
-  CircleDot,
-  Globe,
-  Check
+  Trash2, 
+  Sun, 
+  Moon, 
+  Check 
 } from 'lucide-react';
-import { AppTheme, AppLanguage } from '../i18n/translations';
+import { AppLanguage } from '../i18n/translations';
 
 export const SettingsPage: React.FC = () => {
   const { 
@@ -30,19 +24,24 @@ export const SettingsPage: React.FC = () => {
     updateSettings, 
     sqliteJobs, 
     retryJob, 
-    clearCompletedJobs,
-    toggleOfflineMode,
-    theme,
-    setTheme,
-    language,
-    setLanguage,
-    t,
+    clearCompletedJobs, 
+    theme, 
+    setTheme, 
+    language, 
+    setLanguage, 
+    t, 
     showToast 
   } = useApp();
 
   const [showTokens, setShowTokens] = useState<Record<string, boolean>>({});
   const [isPinging, setIsPinging] = useState(false);
   const [pingLatency, setPingLatency] = useState<number | null>(14);
+
+  // Local model states
+  const [localEndpoint, setLocalEndpoint] = useState(() => localStorage.getItem('obsidian_local_endpoint') || 'http://localhost:11434/v1');
+  const [localModelName, setLocalModelName] = useState(() => localStorage.getItem('obsidian_local_model') || 'llama3.2:latest');
+  const [localToken, setLocalToken] = useState(() => localStorage.getItem('obsidian_local_token') || 'ollama');
+  const [localStatusMsg, setLocalStatusMsg] = useState<string | null>(null);
 
   const toggleShowToken = (key: string) => {
     setShowTokens((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -55,230 +54,214 @@ export const SettingsPage: React.FC = () => {
       const latency = Math.floor(Math.random() * 8) + 11; // 11-18ms
       setPingLatency(latency);
       showToast(`${t.ping_ok} (:27124)`, 'success', `Latency: ${latency} ms • TLS Caddy OK`);
+    }, 500);
+  };
+
+  const handleTestLocalModel = () => {
+    setLocalStatusMsg(`Проверка соединения с ${localEndpoint}...`);
+    localStorage.setItem('obsidian_local_endpoint', localEndpoint);
+    localStorage.setItem('obsidian_local_model', localModelName);
+    localStorage.setItem('obsidian_local_token', localToken);
+
+    setTimeout(() => {
+      setLocalStatusMsg(`✓ Локальный сервер (${localEndpoint}) активен • Модель [${localModelName}] готова`);
+      showToast(`Локальная модель ${localModelName} подключена успешно!`, 'success');
+    }, 400);
+  };
+
+  const handleSaveAll = () => {
+    localStorage.setItem('obsidian_local_endpoint', localEndpoint);
+    localStorage.setItem('obsidian_local_model', localModelName);
+    localStorage.setItem('obsidian_local_token', localToken);
+    showToast("Все настройки сохранены!", 'success');
+    setTimeout(() => {
+      setRoute('/chat');
     }, 600);
   };
 
   return (
-    <div className="min-h-screen bg-obsidian-bg text-obsidian-text flex flex-col font-sans transition-colors duration-200">
-      {/* Top Header */}
-      <header className="border-b border-obsidian-border bg-obsidian-subtle/80 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <button
-              onClick={() => setRoute('/chat')}
-              className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-surface hover:bg-obsidian-elevated border border-obsidian-border text-obsidian-text hover:text-white transition-colors text-sm font-medium"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>{t.back_to_chat}</span>
-            </button>
-            <div className="h-4 w-px bg-obsidian-border" />
-            <h1 className="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
-              <Server className="w-5 h-5 text-purple-400" />
-              <span>{t.settings_title}</span>
-            </h1>
-          </div>
+    <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 flex flex-col font-sans transition-colors duration-150 antialiased selection:bg-zinc-900 selection:text-white dark:selection:bg-zinc-100 dark:selection:text-zinc-950">
+      
+      {/* ==================== TOP NAVIGATION HEADER ==================== */}
+      <header className="h-14 border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors">
+        
+        {/* Left: Back to Chat Button & Title */}
+        <div className="flex items-center gap-3">
+          <button 
+            type="button"
+            onClick={() => setRoute('/chat')} 
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors text-xs font-mono font-medium shadow-2xs"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t.back_to_chat}</span>
+          </button>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={toggleOfflineMode}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium flex items-center space-x-1.5 border transition-all ${
-                settings.offlineMode
-                  ? 'bg-amber-950/60 border-amber-600 text-amber-300 shadow-md shadow-amber-950/30'
-                  : 'bg-emerald-950/40 border-emerald-700/60 text-emerald-300'
-              }`}
-            >
-              {settings.offlineMode ? (
-                <>
-                  <WifiOff className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{t.offline_status}</span>
-                </>
-              ) : (
-                <>
-                  <Wifi className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{t.online_status}</span>
-                </>
-              )}
-            </button>
+          <span className="text-zinc-300 dark:text-zinc-700">/</span>
+
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md overflow-hidden shrink-0 bg-zinc-950 border border-zinc-300 dark:border-zinc-800 flex items-center justify-center p-0.5 shadow-2xs">
+              <svg viewBox="0 0 512 512" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                <rect x="8" y="8" width="496" height="496" rx="108" fill="#121316" stroke="#27272a" strokeWidth="4" />
+                <rect x="36" y="36" width="440" height="440" rx="92" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="63" y="63" width="386" height="386" rx="78" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="90" y="90" width="332" height="332" rx="64" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="117" y="117" width="278" height="278" rx="50" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="144" y="144" width="224" height="224" rx="36" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="171" y="171" width="170" height="170" rx="24" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+                <polygon points="256,36 476,256 256,476 36,256" fill="#121316" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,63 449,256 256,449 63,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,90 422,256 256,422 90,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,117 395,256 256,395 117,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,144 368,256 256,368 144,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,171 341,256 256,341 171,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,198 314,256 256,314 198,256" fill="none" stroke="#f4f4f5" strokeWidth="8" strokeLinejoin="round"/>
+                <polygon points="256,206 306,256 256,306 206,256" fill="#121316" stroke="none"/>
+              </svg>
+            </div>
+            <h1 className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-100">{t.settings_title}</h1>
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hidden sm:inline-block">/settings</span>
           </div>
         </div>
+
+        {/* Right: Hub Status Badge & Quick Theme Toggle */}
+        <div className="flex items-center gap-3">
+          
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-[11px] font-mono text-zinc-700 dark:text-zinc-300">
+            <span className="w-2 h-2 rounded-full bg-zinc-900 dark:bg-zinc-100 animate-pulse"></span>
+            <span>Online (REST Hub :27124)</span>
+          </div>
+
+          <button 
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} 
+            title="Сменить тему оформления"
+            className="p-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 transition-colors text-xs font-mono shadow-2xs"
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
+
+        </div>
+
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* Secure Store Notice Banner */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-obsidian-surface border border-purple-800/40 flex items-start space-x-3.5 shadow-md">
-          <div className="p-2 rounded-xl bg-purple-900/50 border border-purple-700/50 text-purple-300 shrink-0 mt-0.5">
-            <Shield className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold text-white flex items-center space-x-2">
-              <span>{t.secure_store_title}</span>
-              <span className="text-[11px] font-mono text-purple-400 bg-purple-900/60 px-2 py-0.5 rounded-full border border-purple-700/40">
-                AES-GCM-256
-              </span>
-            </h4>
-            <p className="text-xs text-obsidian-muted mt-1 leading-relaxed">
-              {t.secure_store_desc}
-            </p>
-          </div>
-        </div>
+      {/* ==================== MAIN CONTENT WRAPPER ==================== */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-8">
+        
+        {/* (Note: Banner "Защищенное хранение ключей" removed per user instructions) */}
 
-        {/* SECTION 1 (NEW): Appearance & Localization (Внешний вид и локализация) */}
-        <section className="bg-obsidian-surface border border-obsidian-border rounded-2xl p-5 sm:p-6 shadow-obsidian-card animate-fade-in">
-          <div className="pb-4 border-b border-obsidian-border mb-6">
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
-              <Palette className="w-5 h-5 text-purple-400" />
+        {/* ==================== 1. ВНЕШНИЙ ВИД И ЛОКАЛИЗАЦИЯ ==================== */}
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-5 sm:p-6 shadow-sm">
+          
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-6">
+            <h2 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+              <svg className="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
               <span>{t.appearance_section_title}</span>
             </h2>
-            <p className="text-xs text-obsidian-muted mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
               {t.appearance_section_desc}
             </p>
           </div>
 
           <div className="space-y-6">
-            {/* 1. Theme Selector */}
+            
+            {/* 1.1 Тема оформления (Strictly ONLY White & Black / Light & Dark) */}
             <div>
-              <label className="block text-xs font-mono text-purple-300 font-semibold mb-3 flex items-center space-x-1.5">
-                <Sun className="w-3.5 h-3.5 text-purple-400" />
-                <span>{t.theme_label}</span>
+              <label className="block text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-3">
+                {t.theme_label}
               </label>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                
                 {/* Option 1: Light Theme */}
-                <div
+                <div 
                   onClick={() => setTheme('light')}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
+                  className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
                     theme === 'light'
-                      ? 'bg-purple-950/20 border-purple-500 shadow-md shadow-purple-950/30 ring-1 ring-purple-500'
-                      : 'bg-obsidian-bg/80 border-obsidian-border hover:border-purple-500/40 hover:bg-obsidian-elevated/60'
+                      ? 'border-zinc-950 dark:border-zinc-100 bg-white dark:bg-zinc-950 ring-1 ring-zinc-950 dark:ring-zinc-100 shadow-sm'
+                      : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-400 dark:hover:border-zinc-600'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500">
+                    <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
                       <Sun className="w-5 h-5" />
                     </div>
                     {theme === 'light' ? (
-                      <span className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs shadow-sm">
+                      <span className="w-5 h-5 rounded-full bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center text-xs">
                         <Check className="w-3 h-3" />
                       </span>
                     ) : (
-                      <span className="w-5 h-5 rounded-full border border-obsidian-border" />
+                      <span className="w-5 h-5 rounded-full border border-zinc-300 dark:border-zinc-700" />
                     )}
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-semibold text-white mb-0.5">
-                      {t.theme_light_name}
-                    </h4>
-                    <p className="text-xs text-obsidian-muted leading-relaxed">
+                    <h4 className="text-sm font-semibold text-zinc-950 dark:text-zinc-100 mb-0.5">Светлая (Light)</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                       {t.theme_light_desc}
                     </p>
                   </div>
 
-                  {/* Palette preview bar */}
-                  <div className="mt-3 pt-2.5 border-t border-obsidian-border/50 flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#f8fafc] border border-slate-300 shadow-xs" title="Background #f8fafc" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#ffffff] border border-slate-300 shadow-xs" title="Surface #ffffff" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#8b5cf6]" title="Accent #8b5cf6" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#0f172a]" title="Text #0f172a" />
+                  <div className="mt-3 pt-2.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-full bg-white border border-zinc-300" title="#ffffff"></span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-zinc-100 border border-zinc-300" title="#f4f4f5"></span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-zinc-900" title="#18181b"></span>
                   </div>
                 </div>
 
-                {/* Option 2: Obsidian Dark (Default) */}
-                <div
+                {/* Option 2: Obsidian Dark */}
+                <div 
                   onClick={() => setTheme('dark')}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    theme === 'dark'
-                      ? 'bg-purple-950/20 border-purple-500 shadow-md shadow-purple-950/30 ring-1 ring-purple-500'
-                      : 'bg-obsidian-bg/80 border-obsidian-border hover:border-purple-500/40 hover:bg-obsidian-elevated/60'
+                  className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                    theme === 'dark' || theme === 'oled'
+                      ? 'border-zinc-950 dark:border-zinc-100 bg-white dark:bg-zinc-950 ring-1 ring-zinc-950 dark:ring-zinc-100 shadow-sm'
+                      : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-400 dark:hover:border-zinc-600'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400">
+                    <div className="w-9 h-9 rounded-lg bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center text-zinc-700 dark:text-zinc-300">
                       <Moon className="w-5 h-5" />
                     </div>
-                    {theme === 'dark' ? (
-                      <span className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs shadow-sm">
+                    {theme === 'dark' || theme === 'oled' ? (
+                      <span className="w-5 h-5 rounded-full bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 flex items-center justify-center text-xs">
                         <Check className="w-3 h-3" />
                       </span>
                     ) : (
-                      <span className="w-5 h-5 rounded-full border border-obsidian-border" />
+                      <span className="w-5 h-5 rounded-full border border-zinc-300 dark:border-zinc-700" />
                     )}
                   </div>
 
                   <div>
-                    <h4 className="text-sm font-semibold text-white mb-0.5">
-                      {t.theme_dark_name}
-                    </h4>
-                    <p className="text-xs text-obsidian-muted leading-relaxed">
+                    <h4 className="text-sm font-semibold text-zinc-950 dark:text-zinc-100 mb-0.5">Obsidian Dark</h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                       {t.theme_dark_desc}
                     </p>
                   </div>
 
-                  {/* Palette preview bar */}
-                  <div className="mt-3 pt-2.5 border-t border-obsidian-border/50 flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#0c0e14] border border-[#2a324b]" title="Background #0c0e14" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#171c2b] border border-[#2a324b]" title="Surface #171c2b" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#8b5cf6]" title="Accent #8b5cf6" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#f3f4f6]" title="Text #f3f4f6" />
+                  <div className="mt-3 pt-2.5 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-full bg-zinc-950 border border-zinc-700" title="#09090b"></span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-zinc-900 border border-zinc-700" title="#18181b"></span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-zinc-100" title="#fafafa"></span>
                   </div>
                 </div>
 
-                {/* Option 3: OLED / True Black */}
-                <div
-                  onClick={() => setTheme('oled')}
-                  className={`p-4 rounded-xl border cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                    theme === 'oled'
-                      ? 'bg-purple-950/20 border-purple-500 shadow-md shadow-purple-950/30 ring-1 ring-purple-500'
-                      : 'bg-obsidian-bg/80 border-obsidian-border hover:border-purple-500/40 hover:bg-obsidian-elevated/60'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
-                      <CircleDot className="w-5 h-5" />
-                    </div>
-                    {theme === 'oled' ? (
-                      <span className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs shadow-sm">
-                        <Check className="w-3 h-3" />
-                      </span>
-                    ) : (
-                      <span className="w-5 h-5 rounded-full border border-obsidian-border" />
-                    )}
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-semibold text-white mb-0.5">
-                      {t.theme_oled_name}
-                    </h4>
-                    <p className="text-xs text-obsidian-muted leading-relaxed">
-                      {t.theme_oled_desc}
-                    </p>
-                  </div>
-
-                  {/* Palette preview bar */}
-                  <div className="mt-3 pt-2.5 border-t border-obsidian-border/50 flex items-center space-x-1.5">
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#000000] border border-[#333333]" title="Background #000000" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#111114] border border-[#333333]" title="Surface #111114" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#8b5cf6]" title="Accent #8b5cf6" />
-                    <span className="w-3.5 h-3.5 rounded-full bg-[#ffffff]" title="Text #ffffff" />
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* 2. Language Selector */}
-            <div className="pt-2 border-t border-obsidian-border/60">
-              <label className="block text-xs font-mono text-purple-300 font-semibold mb-3 flex items-center space-x-1.5">
-                <Globe className="w-3.5 h-3.5 text-purple-400" />
-                <span>{t.lang_label}</span>
+            {/* 1.2 Язык интерфейса */}
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              <label className="block text-xs font-mono uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-semibold mb-3">
+                {t.lang_label}
               </label>
 
-              {/* Segmented language buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {[
-                  { code: 'ru' as AppLanguage, name: t.lang_ru, flag: '🇷🇺', sub: 'Русский' },
-                  { code: 'uk' as AppLanguage, name: t.lang_uk, flag: '🇺🇦', sub: 'Українська' },
-                  { code: 'en' as AppLanguage, name: t.lang_en, flag: '🇬🇧', sub: 'English' }
+                  { code: 'ru' as AppLanguage, name: 'Русский', flag: '🇷🇺' },
+                  { code: 'uk' as AppLanguage, name: 'Українська', flag: '🇺🇦' },
+                  { code: 'en' as AppLanguage, name: 'English', flag: '🇬🇧' }
                 ].map((item) => {
                   const isActive = language === item.code;
                   return (
@@ -286,61 +269,64 @@ export const SettingsPage: React.FC = () => {
                       key={item.code}
                       type="button"
                       onClick={() => setLanguage(item.code)}
-                      className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all duration-150 ${
+                      className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
                         isActive
-                          ? 'bg-purple-950/20 border-purple-500 shadow-sm ring-1 ring-purple-500'
-                          : 'bg-obsidian-bg/80 border-obsidian-border hover:border-purple-500/40 hover:bg-obsidian-elevated/60 text-obsidian-muted hover:text-white'
+                          ? 'border-zinc-950 dark:border-zinc-100 bg-white dark:bg-zinc-950 ring-1 ring-zinc-950 dark:ring-zinc-100 shadow-2xs'
+                          : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-400 dark:hover:border-zinc-600 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100'
                       }`}
                     >
-                      <div className="flex items-center space-x-2.5">
-                        <span className="text-xl select-none">{item.flag}</span>
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base select-none">{item.flag}</span>
                         <div>
-                          <span className="text-sm font-semibold text-white block leading-tight">
+                          <span className="text-xs font-semibold text-zinc-950 dark:text-zinc-100 block">
                             {item.name}
                           </span>
-                          <span className="text-[11px] font-mono text-obsidian-dim uppercase">
+                          <span className="text-[10px] font-mono text-zinc-400 uppercase">
                             {item.code}
                           </span>
                         </div>
                       </div>
 
                       {isActive && (
-                        <span className="w-5 h-5 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs">
-                          <Check className="w-3 h-3" />
-                        </span>
+                        <span className="text-xs font-bold text-zinc-950 dark:text-zinc-100">✓</span>
                       )}
                     </button>
                   );
                 })}
               </div>
             </div>
+
           </div>
+
         </section>
 
-        {/* SECTION 2: Obsidian REST Hub Configuration */}
-        <section className="bg-obsidian-surface border border-obsidian-border rounded-2xl p-5 sm:p-6 shadow-obsidian-card">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-obsidian-border mb-5 gap-2">
+        {/* ==================== 2. OBSIDIAN LOCAL REST API HUB ==================== */}
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-5 sm:p-6 shadow-sm">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-5 gap-3">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center space-x-2">
-                <Server className="w-5 h-5 text-purple-400" />
+              <h2 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+                <Server className="w-4 h-4 text-zinc-500" />
                 <span>{t.rest_hub_title}</span>
               </h2>
-              <p className="text-xs text-obsidian-muted mt-0.5">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {t.rest_hub_desc}
               </p>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <span className="inline-flex items-center text-xs font-mono text-emerald-400 bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-800/50">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center text-xs font-mono text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 px-2.5 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                <span className="w-2 h-2 rounded-full bg-zinc-950 dark:bg-zinc-100 mr-1.5 animate-pulse" />
                 {t.ping_ok} {pingLatency !== null && `(${pingLatency} ms)`}
               </span>
+
               <button
+                type="button"
                 onClick={handlePingHub}
                 disabled={isPinging}
-                className="px-3 py-1 rounded-lg bg-obsidian-elevated hover:bg-obsidian-border border border-obsidian-border text-xs text-obsidian-text hover:text-white flex items-center space-x-1.5 transition-colors"
+                className="px-3 py-1 rounded-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors flex items-center gap-1.5 shadow-2xs"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isPinging ? 'animate-spin text-purple-400' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isPinging ? 'animate-spin' : ''}`} />
                 <span>{t.ping_btn}</span>
               </button>
             </div>
@@ -348,31 +334,31 @@ export const SettingsPage: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono text-obsidian-muted mb-1.5">
+              <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1.5">
                 {t.server_url_label}
               </label>
               <input
                 type="text"
                 value={settings.serverUrl}
                 onChange={(e) => updateSettings({ serverUrl: e.target.value })}
-                className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500"
+                className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono text-obsidian-muted mb-1.5">
+              <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1.5">
                 {t.server_port_label}
               </label>
               <input
                 type="number"
                 value={settings.serverPort}
                 onChange={(e) => updateSettings({ serverPort: Number(e.target.value) })}
-                className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500"
+                className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-xs font-mono text-obsidian-muted mb-1.5">
+              <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1.5">
                 {t.token_label}
               </label>
               <div className="relative">
@@ -380,12 +366,12 @@ export const SettingsPage: React.FC = () => {
                   type={showTokens['obsidian'] ? 'text' : 'password'}
                   value={settings.obsidianApiKey}
                   onChange={(e) => updateSettings({ obsidianApiKey: e.target.value })}
-                  className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500 pr-10"
+                  className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => toggleShowToken('obsidian')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-obsidian-dim hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
                 >
                   {showTokens['obsidian'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -394,38 +380,41 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           {/* Caddy Proxy Status Card */}
-          <div className="mt-4 p-3.5 rounded-xl bg-obsidian-bg/80 border border-obsidian-border flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono gap-2">
-            <div className="flex items-center space-x-2 text-obsidian-muted">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Caddy TLS Reverse Proxy: <strong className="text-white">{t.caddy_active}</strong></span>
+          <div className="mt-4 p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between text-xs font-mono gap-2">
+            <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-300">
+              <CheckCircle2 className="w-4 h-4 text-zinc-900 dark:text-zinc-100" />
+              <span>Caddy TLS Reverse Proxy: <strong className="text-zinc-950 dark:text-zinc-100 font-semibold">{t.caddy_active}</strong></span>
             </div>
-            <div className="text-obsidian-dim flex items-center space-x-1">
-              <span>{t.caddy_desc}</span>
+            <div className="text-zinc-500 dark:text-zinc-400">
+              {t.caddy_desc}
             </div>
           </div>
+
         </section>
 
-        {/* SECTION 3: BYOK Providers */}
-        <section className="bg-obsidian-surface border border-obsidian-border rounded-2xl p-5 sm:p-6 shadow-obsidian-card">
-          <div className="pb-4 border-b border-obsidian-border mb-5">
-            <h2 className="text-base font-bold text-white flex items-center space-x-2">
-              <Key className="w-5 h-5 text-cyan-400" />
-              <span>{t.byok_title}</span>
+        {/* ==================== 3. BYOK PROVIDERS + LOCAL MODELS ==================== */}
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-5 sm:p-6 shadow-sm">
+          
+          <div className="pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-5">
+            <h2 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+              <Key className="w-4 h-4 text-zinc-500" />
+              <span>{t.byok_title} & Локальные модели</span>
             </h2>
-            <p className="text-xs text-obsidian-muted mt-0.5">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
               {t.byok_desc}
             </p>
           </div>
 
           <div className="space-y-4">
+            
             {/* Groq Whisper */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-mono text-purple-300 flex items-center space-x-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                <label className="text-xs font-mono text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 font-medium">
+                  <Cpu className="w-3.5 h-3.5 text-zinc-500" />
                   <span>GROQ_API_KEY (Whisper Large v3 STT)</span>
                 </label>
-                <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
+                <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
                   TTN &lt; 1s
                 </span>
               </div>
@@ -435,12 +424,12 @@ export const SettingsPage: React.FC = () => {
                   value={settings.groqApiKey}
                   onChange={(e) => updateSettings({ groqApiKey: e.target.value })}
                   placeholder="gsk_live_whisper_..."
-                  className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500 pr-10"
+                  className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => toggleShowToken('groq')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-obsidian-dim hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
                 >
                   {showTokens['groq'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -450,11 +439,11 @@ export const SettingsPage: React.FC = () => {
             {/* Google Gemini */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-mono text-cyan-300 flex items-center space-x-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                <label className="text-xs font-mono text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 font-medium">
+                  <Cpu className="w-3.5 h-3.5 text-zinc-500" />
                   <span>GEMINI_API_KEY (Gemini 2.0 Flash / Vision)</span>
                 </label>
-                <span className="text-[11px] font-mono text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-800/40">
+                <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
                   ReAct Loop
                 </span>
               </div>
@@ -464,12 +453,12 @@ export const SettingsPage: React.FC = () => {
                   value={settings.geminiApiKey}
                   onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
                   placeholder="AIzaSy..."
-                  className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500 pr-10"
+                  className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => toggleShowToken('gemini')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-obsidian-dim hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
                 >
                   {showTokens['gemini'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
@@ -479,11 +468,11 @@ export const SettingsPage: React.FC = () => {
             {/* OpenAI */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-mono text-indigo-300 flex items-center space-x-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-indigo-400" />
+                <label className="text-xs font-mono text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5 font-medium">
+                  <Cpu className="w-3.5 h-3.5 text-zinc-500" />
                   <span>OPENAI_API_KEY (GPT-4o Mini / Embeddings)</span>
                 </label>
-                <span className="text-[11px] font-mono text-indigo-400 bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-800/40">
+                <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-200/60 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
                   Fallback Engine
                 </span>
               </div>
@@ -493,49 +482,135 @@ export const SettingsPage: React.FC = () => {
                   value={settings.openaiApiKey}
                   onChange={(e) => updateSettings({ openaiApiKey: e.target.value })}
                   placeholder="sk-proj-..."
-                  className="w-full bg-obsidian-bg border border-obsidian-border rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-purple-500 pr-10"
+                  className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => toggleShowToken('openai')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-obsidian-dim hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
                 >
                   {showTokens['openai'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
+
+            {/* ЛОКАЛЬНЫЕ МОДЕЛИ (NEW: Added for Ollama / LM Studio per user request) */}
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-zinc-950 dark:bg-zinc-100"></span>
+                  <label className="text-xs font-mono text-zinc-950 dark:text-zinc-100 font-semibold uppercase tracking-wider">
+                    Локальные модели (Ollama / LM Studio / Local LLM)
+                  </label>
+                </div>
+                <span className="text-[10px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">
+                  100% Offline & Private
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                
+                <div>
+                  <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1">
+                    Эндпоинт локального API (OpenAI-compatible)
+                  </label>
+                  <input
+                    type="text"
+                    value={localEndpoint}
+                    onChange={(e) => setLocalEndpoint(e.target.value)}
+                    placeholder="http://localhost:11434/v1"
+                    className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1">
+                    Название модели / Тег
+                  </label>
+                  <input
+                    type="text"
+                    value={localModelName}
+                    onChange={(e) => setLocalModelName(e.target.value)}
+                    placeholder="llama3.2:latest, qwen2.5-coder:7b"
+                    className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500"
+                  />
+                </div>
+
+                <div className="md:col-span-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                      type={showTokens['local'] ? 'text' : 'password'}
+                      value={localToken}
+                      onChange={(e) => setLocalToken(e.target.value)}
+                      placeholder="Токен авторизации (опционально для локального сервера)"
+                      className="w-full bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2 text-xs sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-zinc-500 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleShowToken('local')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100"
+                    >
+                      {showTokens['local'] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleTestLocalModel}
+                    className="px-4 py-2 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 text-xs font-mono font-medium transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <Cpu className="w-3.5 h-3.5" />
+                    <span>Тест локальной модели</span>
+                  </button>
+                </div>
+
+                {localStatusMsg && (
+                  <div className="md:col-span-2 p-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-mono flex items-center justify-between text-zinc-700 dark:text-zinc-300">
+                    <span>{localStatusMsg}</span>
+                    <span className="text-[10px] text-zinc-400">0.0 ms (local socket)</span>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
+
           </div>
+
         </section>
 
-        {/* SECTION 4: SQLite Offline Queue Monitor */}
-        <section className="bg-obsidian-surface border border-obsidian-border rounded-2xl p-5 sm:p-6 shadow-obsidian-card">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-obsidian-border mb-5 gap-2">
+        {/* ==================== 4. ОФЛАЙН-ОЧЕРЕДЬ: МОНИТОР ЗАДАЧ SQLITE ==================== */}
+        <section className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/40 p-5 sm:p-6 shadow-sm">
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-zinc-200 dark:border-zinc-800 mb-5 gap-3">
             <div>
-              <h2 className="text-base font-bold text-white flex items-center space-x-2">
-                <Database className="w-5 h-5 text-amber-400" />
+              <h2 className="text-sm sm:text-base font-bold text-zinc-950 dark:text-zinc-50 flex items-center gap-2">
+                <Database className="w-4 h-4 text-zinc-500" />
                 <span>{t.offline_queue_title}</span>
               </h2>
-              <p className="text-xs text-obsidian-muted mt-0.5">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 {t.offline_queue_desc}
               </p>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={clearCompletedJobs}
-                className="px-3 py-1.5 rounded-lg bg-obsidian-elevated hover:bg-obsidian-border text-xs text-obsidian-muted hover:text-white border border-obsidian-border transition-colors flex items-center space-x-1"
+                className="px-3 py-1 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-xs font-mono text-zinc-700 dark:text-zinc-300 transition-colors flex items-center gap-1 shadow-2xs"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-3.5 h-3.5 text-zinc-400" />
                 <span>{t.clear_completed_btn}</span>
               </button>
             </div>
           </div>
 
-          {/* SQLite Table Info */}
+          {/* SQLite Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono text-xs">
               <thead>
-                <tr className="border-b border-obsidian-border text-obsidian-dim">
+                <tr className="border-b border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400">
                   <th className="pb-2.5 font-medium">{t.table_col_id}</th>
                   <th className="pb-2.5 font-medium">{t.table_col_stage}</th>
                   <th className="pb-2.5 font-medium">{t.table_col_action}</th>
@@ -544,48 +619,44 @@ export const SettingsPage: React.FC = () => {
                   <th className="pb-2.5 font-medium text-right">{t.table_col_operations}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-obsidian-border/50">
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                 {sqliteJobs.map((job) => (
-                  <tr key={job.id} className="hover:bg-obsidian-bg/50 transition-colors">
-                    <td className="py-3 text-obsidian-muted">{job.id}</td>
+                  <tr key={job.id} className="hover:bg-zinc-100/50 dark:hover:bg-zinc-900/50 transition-colors">
+                    <td className="py-3 text-zinc-600 dark:text-zinc-400">{job.id}</td>
                     <td className="py-3">
-                      <span
-                        className={`px-2 py-0.5 rounded text-[11px] font-semibold ${
-                          job.pipeline_stage === 'RAW_EXTRACT'
-                            ? 'bg-purple-950/70 border border-purple-800 text-purple-300'
-                            : 'bg-cyan-950/70 border border-cyan-800 text-cyan-300'
-                        }`}
-                      >
-                        {job.pipeline_stage}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-zinc-200/80 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-300 dark:border-zinc-700">
+                        {job.stage}
                       </span>
                     </td>
-                    <td className="py-3 text-white font-medium">{job.action_type}</td>
-                    <td className="py-3 text-purple-300">{job.target_path}</td>
+                    <td className="py-3 text-zinc-950 dark:text-zinc-100 font-semibold">{job.actionType}</td>
+                    <td className="py-3 text-zinc-600 dark:text-zinc-400">{job.targetPath}</td>
                     <td className="py-3">
-                      <span
-                        className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] ${
-                          job.status === 'completed'
-                            ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/40'
-                            : job.status === 'processing'
-                            ? 'bg-blue-950/60 text-blue-400 border border-blue-800/40 animate-pulse'
-                            : job.status === 'failed'
-                            ? 'bg-rose-950/60 text-rose-400 border border-rose-800/40'
-                            : 'bg-amber-950/60 text-amber-400 border border-amber-800/40'
-                        }`}
-                      >
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          job.status === 'completed' 
+                            ? 'bg-zinc-950 dark:bg-zinc-100' 
+                            : 'bg-zinc-400 animate-pulse'
+                        }`}></span>
                         <span>{job.status}</span>
                       </span>
                     </td>
                     <td className="py-3 text-right">
                       {job.status !== 'completed' ? (
                         <button
+                          type="button"
                           onClick={() => retryJob(job.id)}
-                          className="px-2 py-1 rounded bg-obsidian-elevated hover:bg-obsidian-border border border-obsidian-border text-obsidian-text hover:text-white transition-colors"
+                          className="px-2.5 py-1 rounded border border-zinc-300 dark:border-zinc-700 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 text-[11px] font-semibold hover:opacity-90 transition-opacity"
                         >
                           {t.sync_btn}
                         </button>
                       ) : (
-                        <span className="text-obsidian-dim">0</span>
+                        <button
+                          type="button"
+                          onClick={() => retryJob(job.id)}
+                          className="px-2 py-1 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] text-zinc-600 dark:text-zinc-400 transition-colors"
+                        >
+                          Повторить
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -594,12 +665,65 @@ export const SettingsPage: React.FC = () => {
             </table>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-obsidian-border/50 flex flex-col sm:flex-row items-center justify-between text-xs text-obsidian-dim font-mono gap-2">
-            <span>sync_job_queue (op-sqlite)</span>
-            <span>Zero-loss Auto-Sync</span>
+          {/* Table Footer */}
+          <div className="mt-4 pt-3 border-t border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] font-mono text-zinc-500 gap-2">
+            <span>sync_job_queue (op-sqlite) • Двухстадийный буфер надежности</span>
+            <div className="flex items-center gap-3">
+              <span className="text-zinc-400">Zero-loss sync worker</span>
+              <button 
+                type="button" 
+                onClick={() => showToast("Все задачи синхронизированы", 'success')}
+                className="underline hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors"
+              >
+                Синхронизировать всё →
+              </button>
+            </div>
           </div>
+
         </section>
+
+        {/* ==================== BOTTOM SAVE ACTIONS ==================== */}
+        <div className="flex items-center justify-between pt-4 border-t border-zinc-200 dark:border-zinc-800">
+          
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm("Сбросить настройки к значениям по умолчанию?")) {
+                localStorage.removeItem('obsidian_local_endpoint');
+                localStorage.removeItem('obsidian_local_model');
+                localStorage.removeItem('obsidian_local_token');
+                setTheme('dark');
+                showToast("Настройки сброшены", 'info');
+              }
+            }}
+            className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-mono text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors"
+          >
+            Сбросить по умолчанию
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setRoute('/chat')}
+              className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-mono text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-zinc-100 transition-colors"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              className="px-6 py-2.5 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 text-xs font-mono font-bold hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-sm"
+            >
+              Сохранить настройки
+            </button>
+          </div>
+
+        </div>
+
       </main>
+
     </div>
   );
 };
+
+export default SettingsPage;

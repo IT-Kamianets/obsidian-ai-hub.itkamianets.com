@@ -2,14 +2,39 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238b5cf6'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Obsidian AI Hub & Knowledge Manager</title>
+    <title>Obsidian AI Hub — Knowledge Base & Autonomous Agent Platform</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var savedTheme = localStorage.getItem('obsidian_hub_theme');
+          var isDark = savedTheme ? savedTheme !== 'light' : !window.matchMedia('(prefers-color-scheme: light)').matches;
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+            document.documentElement.setAttribute('data-theme', savedTheme || 'dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+          var savedLang = localStorage.getItem('obsidian_hub_lang');
+          if (savedLang) {
+            document.documentElement.setAttribute('lang', savedLang);
+          } else {
+            var sysLang = (navigator.language || '').toLowerCase();
+            var detected = sysLang.startsWith('ru') ? 'ru' : (sysLang.startsWith('uk') || sysLang.startsWith('ua')) ? 'uk' : 'en';
+            document.documentElement.setAttribute('lang', detected);
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-obsidian-bg text-obsidian-text selection:bg-obsidian-purple selection:text-white font-sans antialiased overflow-x-hidden min-h-screen">
+  <body class="bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 font-sans antialiased overflow-x-hidden min-h-screen transition-colors duration-150">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

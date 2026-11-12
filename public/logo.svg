@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <style>
+      :root {
+        --logo-bg: #121316;
+        --logo-stroke: #f4f4f5;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --logo-bg: #ffffff;
+          --logo-stroke: #18181b;
+        }
+      }
+      .light & {
+        --logo-bg: #ffffff;
+        --logo-stroke: #18181b;
+      }
+      .bg-fill { fill: var(--logo-bg, #121316); }
+      .stroke-line {
+        fill: none;
+        stroke: var(--logo-stroke, #f4f4f5);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    </style>
+  </defs>
+
+  <!-- Background Base Container -->
+  <rect x="8" y="8" width="496" height="496" rx="108" class="bg-fill" />
+
+  <!-- Concentric Rounded Squircles (Background Layer) -->
+  <rect x="36" y="36" width="440" height="440" rx="92" class="stroke-line" />
+  <rect x="63" y="63" width="386" height="386" rx="78" class="stroke-line" />
+  <rect x="90" y="90" width="332" height="332" rx="64" class="stroke-line" />
+  <rect x="117" y="117" width="278" height="278" rx="50" class="stroke-line" />
+  <rect x="144" y="144" width="224" height="224" rx="36" class="stroke-line" />
+  <rect x="171" y="171" width="170" height="170" rx="24" class="stroke-line" />
+
+  <!-- Masking Diamond Polygon (covers inner parts of squircles) -->
+  <polygon points="256,36 476,256 256,476 36,256" class="bg-fill" />
+
+  <!-- Concentric Diamonds (Foreground Layer) -->
+  <polygon points="256,36 476,256 256,476 36,256" class="stroke-line" />
+  <polygon points="256,63 449,256 256,449 63,256" class="stroke-line" />
+  <polygon points="256,90 422,256 256,422 90,256" class="stroke-line" />
+  <polygon points="256,117 395,256 256,395 117,256" class="stroke-line" />
+  <polygon points="256,144 368,256 256,368 144,256" class="stroke-line" />
+  <polygon points="256,171 341,256 256,341 171,256" class="stroke-line" />
+  <polygon points="256,198 314,256 256,314 198,256" class="stroke-line" />
+
+  <!-- Central Solid Diamond Hole -->
+  <polygon points="256,206 306,256 256,306 206,256" class="bg-fill" />
+</svg>

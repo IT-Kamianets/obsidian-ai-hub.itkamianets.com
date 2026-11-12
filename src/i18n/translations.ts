@@ -103,12 +103,25 @@ export interface Translations {
   starter_prompt_arch: string;
   rest_hub_status_online: string;
 
+  // Landing Navbar
+  nav_tools: string;
+  nav_gallery: string;
+  nav_features: string;
+  nav_pricing: string;
+  nav_resources: string;
+  nav_advantages: string;
+  nav_explore: string;
+  nav_playground: string;
+  nav_architecture: string;
+
   // Landing Page Hero & Main
   hero_title_1: string;
   hero_title_2: string;
   hero_subtitle: string;
   hero_cta_start: string;
   hero_cta_demo: string;
+  hero_cta_playground: string;
+  hero_cta_arch_spec: string;
   hero_badge_bypass: string;
   login_btn: string;
   features_title: string;
@@ -292,11 +305,23 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     starter_prompt_arch: 'Какая архитектура у Obsidian REST Hub?',
     rest_hub_status_online: 'REST Hub: Online',
 
+    nav_tools: 'Инструменты',
+    nav_gallery: 'Галерея',
+    nav_features: 'Возможности',
+    nav_pricing: 'Тарифы',
+    nav_resources: 'Ресурсы',
+    nav_advantages: 'Преимущества',
+    nav_explore: 'Возможности',
+    nav_playground: 'Песочница',
+    nav_architecture: 'Архитектура',
+
     hero_title_1: 'Obsidian AI Hub &',
     hero_title_2: 'Knowledge Manager',
     hero_subtitle: 'Автономная оцифровка заметок, голосовых файлов (Groq Whisper) и OCR документов. Интеллектуальное управление персональным хранилищем через Obsidian Local REST API без сторонних облаков.',
     hero_cta_start: 'Начать работу',
     hero_cta_demo: 'Открыть ассистент (Демо)',
+    hero_cta_playground: 'Запустить песочницу агента',
+    hero_cta_arch_spec: 'Спецификация архитектуры',
     hero_badge_bypass: 'Демо-обход (Гость)',
     login_btn: 'Войти',
     features_title: 'Ключевые преимущества архитектуры',
@@ -472,11 +497,23 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     starter_prompt_arch: 'Яка архітектура в Obsidian REST Hub?',
     rest_hub_status_online: 'REST Hub: Online',
 
+    nav_tools: 'Інструменти',
+    nav_gallery: 'Галерея',
+    nav_features: 'Можливості',
+    nav_pricing: 'Тарифи',
+    nav_resources: 'Ресурси',
+    nav_advantages: 'Переваги',
+    nav_explore: 'Можливості',
+    nav_playground: 'Пісочниця',
+    nav_architecture: 'Архітектура',
+
     hero_title_1: 'Obsidian AI Hub &',
     hero_title_2: 'Knowledge Manager',
     hero_subtitle: 'Автономне оцифрування нотаток, голосових записів (Groq Whisper) та OCR документів. Інтелектуальне керування персональним сховищем через Obsidian Local REST API без сторонніх хмар.',
     hero_cta_start: 'Почати роботу',
     hero_cta_demo: 'Відкрити асистент (Демо)',
+    hero_cta_playground: 'Запустити пісочницю агента',
+    hero_cta_arch_spec: 'Специфікація архітектури',
     hero_badge_bypass: 'Демо-обхід (Гість)',
     login_btn: 'Увійти',
     features_title: 'Ключові переваги архітектури',
@@ -652,17 +689,29 @@ export const TRANSLATIONS: Record<AppLanguage, Translations> = {
     starter_prompt_arch: 'What is the architecture of Obsidian REST Hub?',
     rest_hub_status_online: 'REST Hub: Online',
 
-    hero_title_1: 'Obsidian AI Hub &',
-    hero_title_2: 'Knowledge Manager',
-    hero_subtitle: 'Autonomous digitization of notes, audio memos (Groq Whisper), and document OCR. Direct vault management via Obsidian Local REST API without intermediate clouds.',
+    nav_tools: 'Design Tools',
+    nav_gallery: 'Gallery',
+    nav_features: 'Free Drops',
+    nav_pricing: 'Pricing',
+    nav_resources: 'Resources',
+    nav_advantages: 'Advantages',
+    nav_explore: 'Explore Hub',
+    nav_playground: 'Playground',
+    nav_architecture: 'Architecture',
+
+    hero_title_1: 'The Open Hub for Obsidian Vaults &',
+    hero_title_2: 'Autonomous AI Agents.',
+    hero_subtitle: 'Self-hosted, Local-First, and Zero Telemetry. Connect your headless Obsidian vault, orchestrate ReAct agent tool calling, and synchronize daily tasks without intermediate cloud lock-in.',
     hero_cta_start: 'Get Started',
     hero_cta_demo: 'Open Assistant (Demo)',
+    hero_cta_playground: 'Launch Agent Playground',
+    hero_cta_arch_spec: 'View Architecture Spec',
     hero_badge_bypass: 'Guest Demo',
     login_btn: 'Sign In',
     features_title: 'Core Architectural Tenets',
     features_desc: 'Engineered for zero-intermediate telemetry, on-device resilience, and ultra-fast sub-second latency.',
     auth_login_tab: 'Sign In',
-    auth_register_tab: 'Register',
+    auth_register_tab: 'Sign Up',
     auth_demo_button: 'Enter Demo Mode →',
 
     terminal_caddy_status: 'docker-compose.yml • vault-caddy:443',

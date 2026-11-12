@@ -108,12 +108,13 @@ export const MultimodalModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-obsidian-surface border border-obsidian-border rounded-2xl shadow-obsidian-modal p-6 overflow-hidden text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-sm animate-fade-in">
+      <div className="relative w-full max-w-lg bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 overflow-hidden text-left transition-colors">
         {/* Close Button */}
         <button
+          type="button"
           onClick={() => setMultimodalModal(null)}
-          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-obsidian-bg hover:bg-obsidian-elevated text-obsidian-muted hover:text-white flex items-center justify-center border border-obsidian-border transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-500 hover:text-zinc-950 dark:hover:text-zinc-100 flex items-center justify-center border border-zinc-200 dark:border-zinc-800 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
@@ -121,25 +122,25 @@ export const MultimodalModal: React.FC = () => {
         {/* VOICE MODAL */}
         {multimodalModal === 'voice' && (
           <div>
-            <div className="flex items-center space-x-2 text-xs font-mono text-purple-400 mb-2">
-              <Zap className="w-3.5 h-3.5" />
+            <div className="flex items-center space-x-2 text-xs font-mono text-zinc-500 mb-2">
+              <Zap className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
               <span>Groq Whisper Cloud STT (whisper-large-v3)</span>
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">
+            <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 mb-1">
               {t.voice_modal_title}
             </h3>
-            <p className="text-xs text-obsidian-muted mb-6">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-6">
               {t.voice_modal_desc}
             </p>
 
             {/* Audio Wave Visualizer Area */}
-            <div className="py-8 px-4 rounded-xl bg-obsidian-bg border border-obsidian-border flex flex-col items-center justify-center mb-6">
+            <div className="py-8 px-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 flex flex-col items-center justify-center mb-6">
               {isRecording ? (
                 <div className="flex items-center space-x-1.5 h-16 mb-4">
                   {[40, 70, 95, 60, 85, 45, 90, 75, 50, 80, 100, 65, 40].map((h, i) => (
                     <div
                       key={i}
-                      className="w-1.5 bg-gradient-to-t from-purple-600 to-cyan-400 rounded-full soundwave-bar"
+                      className="w-1.5 bg-zinc-900 dark:bg-zinc-100 rounded-full soundwave-bar"
                       style={{
                         height: `${h}%`,
                         animationDelay: `${i * 0.1}s`
@@ -148,12 +149,12 @@ export const MultimodalModal: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <div className="w-16 h-16 rounded-full bg-purple-950/40 border border-purple-800/40 flex items-center justify-center mb-4 text-purple-400">
+                <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 flex items-center justify-center mb-4 text-zinc-700 dark:text-zinc-300">
                   <Mic className="w-8 h-8" />
                 </div>
               )}
 
-              <div className="font-mono text-lg font-bold text-white mb-1">
+              <div className="font-mono text-lg font-bold text-zinc-950 dark:text-zinc-50 mb-1">
                 {isRecording
                   ? `00:${recordSeconds < 10 ? '0' : ''}${recordSeconds}`
                   : recordSeconds > 0
@@ -161,7 +162,7 @@ export const MultimodalModal: React.FC = () => {
                   : t.voice_ready}
               </div>
 
-              <div className="text-xs text-obsidian-dim">
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">
                 {isRecording
                   ? t.voice_listening
                   : t.voice_tap_to_start}
@@ -170,22 +171,22 @@ export const MultimodalModal: React.FC = () => {
 
             {/* Transcription Result Preview */}
             {isTranscribing && (
-              <div className="p-4 rounded-xl bg-obsidian-bg border border-purple-500/30 text-center mb-6 animate-pulse">
-                <span className="text-xs font-mono text-purple-300">
+              <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-center mb-6 animate-pulse">
+                <span className="text-xs font-mono text-zinc-700 dark:text-zinc-300">
                   {t.voice_processing}
                 </span>
               </div>
             )}
 
             {voiceTranscript && !isTranscribing && (
-              <div className="p-4 rounded-xl bg-obsidian-bg border border-obsidian-border mb-6">
-                <div className="flex items-center justify-between text-xs font-mono text-purple-400 mb-1.5">
+              <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-6">
+                <div className="flex items-center justify-between text-xs font-mono text-zinc-500 mb-1.5">
                   <span>{t.voice_result_label}</span>
-                  <span className="text-emerald-400 flex items-center">
+                  <span className="text-zinc-900 dark:text-zinc-100 font-semibold flex items-center">
                     <CheckCircle2 className="w-3 h-3 mr-1" /> TTN: 680ms
                   </span>
                 </div>
-                <p className="text-sm text-white italic">
+                <p className="text-sm text-zinc-900 dark:text-zinc-100 italic">
                   "{voiceTranscript}"
                 </p>
               </div>
@@ -195,8 +196,9 @@ export const MultimodalModal: React.FC = () => {
             <div className="flex items-center space-x-3">
               {isRecording ? (
                 <button
+                  type="button"
                   onClick={handleStopVoice}
-                  className="flex-1 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-medium text-sm flex items-center justify-center space-x-2 transition-colors shadow-lg shadow-rose-900/40"
+                  className="flex-1 py-3 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold text-sm flex items-center justify-center space-x-2 transition-colors shadow-sm"
                 >
                   <Square className="w-4 h-4" />
                   <span>{t.voice_btn_stop}</span>
@@ -204,15 +206,17 @@ export const MultimodalModal: React.FC = () => {
               ) : voiceTranscript ? (
                 <>
                   <button
+                    type="button"
                     onClick={handleStartVoice}
-                    className="py-3 px-4 rounded-xl bg-obsidian-elevated hover:bg-obsidian-border text-obsidian-text border border-obsidian-border text-sm flex items-center justify-center space-x-1.5"
+                    className="py-3 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 text-sm flex items-center justify-center space-x-1.5 transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>{t.voice_btn_rerecord}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={handleSendVoiceToChat}
-                    className="flex-1 py-3 rounded-xl bg-obsidian-purple hover:bg-obsidian-purple-hover text-white font-medium text-sm flex items-center justify-center space-x-2 shadow-lg shadow-purple-900/40"
+                    className="flex-1 py-3 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold text-sm flex items-center justify-center space-x-2 transition-colors shadow-sm"
                   >
                     <Send className="w-4 h-4" />
                     <span>{t.voice_btn_send}</span>
@@ -220,8 +224,9 @@ export const MultimodalModal: React.FC = () => {
                 </>
               ) : (
                 <button
+                  type="button"
                   onClick={handleStartVoice}
-                  className="w-full py-3 rounded-xl bg-obsidian-purple hover:bg-obsidian-purple-hover text-white font-medium text-sm flex items-center justify-center space-x-2 shadow-lg shadow-purple-900/40"
+                  className="w-full py-3 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold text-sm flex items-center justify-center space-x-2 transition-colors shadow-sm"
                 >
                   <Mic className="w-4 h-4" />
                   <span>{t.voice_btn_start}</span>
@@ -234,45 +239,48 @@ export const MultimodalModal: React.FC = () => {
         {/* CAMERA / OCR MODAL */}
         {multimodalModal === 'camera' && (
           <div>
-            <div className="flex items-center space-x-2 text-xs font-mono text-cyan-400 mb-2">
-              <Camera className="w-3.5 h-3.5" />
+            <div className="flex items-center space-x-2 text-xs font-mono text-zinc-500 mb-2">
+              <Camera className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
               <span>On-Device ML Kit OCR / Gemini Vision</span>
             </div>
-            <h3 className="text-xl font-bold text-white mb-1">
+            <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 mb-1">
               {t.ocr_modal_title}
             </h3>
-            <p className="text-xs text-obsidian-muted mb-4">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4">
               {t.ocr_modal_desc}
             </p>
 
             {/* Doc Type Selector */}
             <div className="grid grid-cols-3 gap-2 mb-4">
               <button
+                type="button"
                 onClick={() => { setSelectedDocType('book'); setOcrText(''); }}
                 className={`py-2 px-3 rounded-lg border text-xs font-medium transition-all ${
                   selectedDocType === 'book'
-                    ? 'border-purple-500 bg-purple-950/40 text-purple-300'
-                    : 'border-obsidian-border bg-obsidian-bg text-obsidian-muted hover:text-white'
+                    ? 'border-zinc-950 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 font-semibold'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100'
                 }`}
               >
                 {t.ocr_type_book}
               </button>
               <button
+                type="button"
                 onClick={() => { setSelectedDocType('receipt'); setOcrText(''); }}
                 className={`py-2 px-3 rounded-lg border text-xs font-medium transition-all ${
                   selectedDocType === 'receipt'
-                    ? 'border-purple-500 bg-purple-950/40 text-purple-300'
-                    : 'border-obsidian-border bg-obsidian-bg text-obsidian-muted hover:text-white'
+                    ? 'border-zinc-950 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 font-semibold'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100'
                 }`}
               >
                 {t.ocr_type_receipt}
               </button>
               <button
+                type="button"
                 onClick={() => { setSelectedDocType('notes'); setOcrText(''); }}
                 className={`py-2 px-3 rounded-lg border text-xs font-medium transition-all ${
                   selectedDocType === 'notes'
-                    ? 'border-purple-500 bg-purple-950/40 text-purple-300'
-                    : 'border-obsidian-border bg-obsidian-bg text-obsidian-muted hover:text-white'
+                    ? 'border-zinc-950 dark:border-zinc-100 bg-zinc-100 dark:bg-zinc-800 text-zinc-950 dark:text-zinc-100 font-semibold'
+                    : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-zinc-100'
                 }`}
               >
                 {t.ocr_type_notes}
@@ -280,37 +288,36 @@ export const MultimodalModal: React.FC = () => {
             </div>
 
             {/* Scanner Viewport */}
-            <div className="relative h-44 rounded-xl bg-obsidian-bg border border-obsidian-border overflow-hidden flex flex-col items-center justify-center p-4 mb-4">
-              {/* Scan target lines */}
-              <div className="absolute inset-4 border border-dashed border-cyan-500/40 rounded-lg pointer-events-none" />
-              <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-cyan-400" />
-              <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-cyan-400" />
-              <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-cyan-400" />
-              <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-cyan-400" />
+            <div className="relative h-44 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200 dark:border-zinc-800 overflow-hidden flex flex-col items-center justify-center p-4 mb-4">
+              <div className="absolute inset-4 border border-dashed border-zinc-400 dark:border-zinc-600 rounded-lg pointer-events-none" />
+              <div className="absolute top-4 left-4 w-4 h-4 border-t-2 border-l-2 border-zinc-800 dark:border-zinc-200" />
+              <div className="absolute top-4 right-4 w-4 h-4 border-t-2 border-r-2 border-zinc-800 dark:border-zinc-200" />
+              <div className="absolute bottom-4 left-4 w-4 h-4 border-b-2 border-l-2 border-zinc-800 dark:border-zinc-200" />
+              <div className="absolute bottom-4 right-4 w-4 h-4 border-b-2 border-r-2 border-zinc-800 dark:border-zinc-200" />
 
               {isScanning && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-zinc-900 dark:via-zinc-100 to-transparent animate-pulse" />
               )}
 
-              <Camera className="w-10 h-10 text-cyan-400 mb-2 opacity-80" />
-              <span className="text-xs font-medium text-obsidian-text">
+              <Camera className="w-10 h-10 text-zinc-700 dark:text-zinc-300 mb-2 opacity-80" />
+              <span className="text-xs font-medium text-zinc-900 dark:text-zinc-100">
                 {t.ocr_camera_aimed}
               </span>
-              <span className="text-[11px] text-obsidian-dim font-mono mt-0.5">
+              <span className="text-[11px] text-zinc-500 font-mono mt-0.5">
                 {t.ocr_camera_specs}
               </span>
             </div>
 
             {/* OCR Extracted Text Result */}
             {ocrText && (
-              <div className="p-3.5 rounded-xl bg-obsidian-bg border border-obsidian-border mb-4 font-mono text-xs">
-                <div className="flex items-center justify-between text-cyan-400 mb-1">
+              <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 mb-4 font-mono text-xs">
+                <div className="flex items-center justify-between text-zinc-700 dark:text-zinc-300 mb-1">
                   <span>{t.ocr_result_label}</span>
-                  <span className="text-emerald-400 flex items-center">
+                  <span className="text-zinc-900 dark:text-zinc-100 font-semibold flex items-center">
                     <CheckCircle2 className="w-3 h-3 mr-1" /> Confidence 99.2%
                   </span>
                 </div>
-                <pre className="text-obsidian-muted whitespace-pre-wrap font-sans text-xs">
+                <pre className="text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap font-sans text-xs">
                   {ocrText}
                 </pre>
               </div>
@@ -320,9 +327,10 @@ export const MultimodalModal: React.FC = () => {
             <div className="flex items-center space-x-3">
               {!ocrText ? (
                 <button
+                  type="button"
                   onClick={handleRunOcr}
                   disabled={isScanning}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-medium text-sm flex items-center justify-center space-x-2 shadow-lg shadow-cyan-900/40"
+                  className="w-full py-3 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold text-sm flex items-center justify-center space-x-2 transition-colors shadow-sm"
                 >
                   <Sparkles className="w-4 h-4" />
                   <span>{isScanning ? t.ocr_scanning : t.ocr_btn_capture}</span>
@@ -330,15 +338,17 @@ export const MultimodalModal: React.FC = () => {
               ) : (
                 <>
                   <button
+                    type="button"
                     onClick={handleRunOcr}
-                    className="py-3 px-4 rounded-xl bg-obsidian-elevated hover:bg-obsidian-border text-obsidian-text border border-obsidian-border text-sm flex items-center justify-center space-x-1.5"
+                    className="py-3 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-800 text-sm flex items-center justify-center space-x-1.5 transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                     <span>{t.ocr_btn_retry}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={handleSendOcrToChat}
-                    className="flex-1 py-3 rounded-xl bg-obsidian-purple hover:bg-obsidian-purple-hover text-white font-medium text-sm flex items-center justify-center space-x-2 shadow-lg shadow-purple-900/40"
+                    className="flex-1 py-3 rounded-xl bg-zinc-950 text-white dark:bg-zinc-100 dark:text-zinc-950 font-semibold text-sm flex items-center justify-center space-x-2 transition-colors shadow-sm"
                   >
                     <Send className="w-4 h-4" />
                     <span>{t.ocr_btn_send}</span>
@@ -352,3 +362,4 @@ export const MultimodalModal: React.FC = () => {
     </div>
   );
 };
+export default MultimodalModal;

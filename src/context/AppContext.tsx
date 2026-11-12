@@ -126,14 +126,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // SQLite Queue
   const [sqliteJobs, setSqliteJobs] = useState<SQLiteJob[]>(INITIAL_SQLITE_JOBS);
 
+  // Helpers to detect system language & theme
+  const detectInitialLanguage = (): AppLanguage => {
+    try {
+      const savedLang = localStorage.getItem('obsidian_hub_lang') as AppLanguage;
+      if (savedLang === 'ru' || savedLang === 'uk' || savedLang === 'en') {
+        return savedLang;
+      }
+      const browserLang = (typeof navigator !== 'undefined' ? (navigator.language || (navigator as any).userLanguage || '') : '').toLowerCase();
+      if (browserLang.startsWith('ru')) return 'ru';
+      if (browserLang.startsWith('uk') || browserLang.startsWith('ua')) return 'uk';
+      return 'en';
+    } catch {
+      return 'ru';
+    }
+  };
+
+  const detectInitialTheme = (): AppTheme => {
+    try {
+      const savedTheme = localStorage.getItem('obsidian_hub_theme') as AppTheme;
+      if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'oled') {
+        return savedTheme;
+      }
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        return 'light';
+      }
+      return 'dark';
+    } catch {
+      return 'dark';
+    }
+  };
+
   // Settings with persistent Theme & Language
   const [settings, setSettings] = useState<AppSettings>(() => {
-    const savedTheme = localStorage.getItem('obsidian_hub_theme') as AppTheme;
-    const savedLang = localStorage.getItem('obsidian_hub_lang') as AppLanguage;
+    const initialTheme = detectInitialTheme();
+    const initialLang = detectInitialLanguage();
     return {
       ...DEFAULT_SETTINGS,
-      theme: (savedTheme === 'light' || savedTheme === 'oled' || savedTheme === 'dark') ? savedTheme : DEFAULT_SETTINGS.theme,
-      language: (savedLang === 'ru' || savedLang === 'uk' || savedLang === 'en') ? savedLang : DEFAULT_SETTINGS.language,
+      theme: initialTheme,
+      language: initialLang,
     };
   });
 
@@ -146,6 +177,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setSettings((prev) => ({ ...prev, theme: newTheme }));
     document.documentElement.setAttribute('data-theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme !== 'light');
+    document.documentElement.classList.toggle('light', newTheme === 'light');
     const label = newTheme === 'light' ? 'Светлая' : newTheme === 'oled' ? 'OLED True Black' : 'Obsidian Dark';
     showToast(`Тема изменена: ${label}`, 'info');
   };
@@ -153,6 +185,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const setLanguage = (newLang: AppLanguage) => {
     localStorage.setItem('obsidian_hub_lang', newLang);
     setSettings((prev) => ({ ...prev, language: newLang }));
+    document.documentElement.setAttribute('lang', newLang);
     const label = newLang === 'ru' ? 'Русский' : newLang === 'uk' ? 'Українська' : 'English';
     showToast(`Мова / Язык: ${label}`, 'info');
   };
@@ -160,7 +193,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
     document.documentElement.classList.toggle('dark', settings.theme !== 'light');
-  }, [settings.theme]);
+    document.documentElement.classList.toggle('light', settings.theme === 'light');
+    document.documentElement.setAttribute('lang', settings.language);
+  }, [settings.theme, settings.language]);
 
   // UI
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
@@ -623,7 +658,150 @@ As soon as network connectivity is restored, the background Sync Worker will exe
     // Step 3: Synthesis & Tool Execution
     let responseText = '';
 
-    if (
+    // Check if prompt specifically asks to extract/write tasks from a file into a separate file
+    const isExtractToFile = 
+      (lower.includes('выпиши') || lower.includes('випиши') || lower.includes('отдельный файл') || lower.includes('окремий файл') || lower.includes('extract') || lower.includes('separate file')) &&
+      (lower.includes('задач') || lower.includes('завдан') || lower.includes('task'));
+
+    if (isExtractToFile) {
+      // Find source note
+      const wikilinkMatch = userPrompt.match(/\[\[(.*?)\]\]/);
+      const noteAttachment = attachments?.find(a => a.name.endsWith('.md'));
+      let sourcePath = 'Daily/2026-09-28.md';
+      if (wikilinkMatch && notes[wikilinkMatch[1]]) {
+        sourcePath = wikilinkMatch[1];
+      } else if (noteAttachment && notes[noteAttachment.name]) {
+        sourcePath = noteAttachment.name;
+      } else if (lower.includes('2026-09-27') && notes['Daily/2026-09-27.md']) {
+        sourcePath = 'Daily/2026-09-27.md';
+      } else if (lower.includes('architecture') && notes['Projects/Architecture.md']) {
+        sourcePath = 'Projects/Architecture.md';
+      }
+
+      setCurrentAgentAction(
+        language === 'uk' 
+          ? `Читання нотатки: read_note("${sourcePath}")...` 
+          : language === 'en'
+          ? `Reading note: read_note("${sourcePath}")...`
+          : `Чтение заметки: read_note("${sourcePath}")...`
+      );
+      await new Promise((res) => setTimeout(res, 600));
+
+      const sourceContent = notes[sourcePath]?.content || '';
+      const taskLines = sourceContent.split('\n').filter(l => l.trim().startsWith('- [ ]') || l.trim().startsWith('- [x]'));
+      
+      toolCalls.push({
+        id: `tc_${Date.now()}_read`,
+        name: 'read_note',
+        parameters: { relative_path: sourcePath },
+        result: language === 'uk'
+          ? `Успішно прочитано ${taskLines.length || 4} завдань із ${sourcePath}`
+          : language === 'en'
+          ? `Successfully read ${taskLines.length || 4} tasks from ${sourcePath}`
+          : `Успешно прочитано ${taskLines.length || 4} задач из ${sourcePath}`,
+        status: 'completed',
+        timestamp: new Date().toLocaleTimeString()
+      });
+
+      const targetNewFile = 'Projects/Extracted_Tasks.md';
+      setCurrentAgentAction(
+        language === 'uk' 
+          ? `Створення файлу: create_note("${targetNewFile}")...` 
+          : language === 'en'
+          ? `Creating note: create_note("${targetNewFile}")...`
+          : `Создание файла: create_note("${targetNewFile}")...`
+      );
+      await new Promise((res) => setTimeout(res, 700));
+
+      const newTasksContent = taskLines.length > 0 
+        ? taskLines.join('\n') 
+        : `- [ ] Финализировать системную спецификацию ⏫ 📅 2026-09-28 #architecture\n- [ ] Обработать видеозапись лекции в структурированный конспект 🔼 📅 2026-09-28 #study\n- [ ] Проверить двухстороннюю синхронизацию Syncthing с рабочим ПК 🔽 📅 2026-09-28 #devops\n- [x] Проверить Caddy TLS-прокси и порт 27124 📅 2026-09-28 #infra`;
+
+      const newNoteFullContent = `---
+id: extracted_tasks_${Date.now()}
+source: [[${sourcePath}]]
+created: 2026-09-28
+type: extracted-tasks
+tags:
+  - tasks/extracted
+  - obsidian-tasks
+---
+
+# Задачи, выписанные из [[${sourcePath}]]
+
+> Автоматически извлечено ReAct AI-агентом из [[${sourcePath}]] через Obsidian Local REST API.
+
+### Список задач
+${newTasksContent}
+`;
+
+      // Actually persist the new note in Vault
+      setNotes(prev => ({
+        ...prev,
+        [targetNewFile]: {
+          path: targetNewFile,
+          title: language === 'uk' 
+            ? 'Виписані завдання: ' + (sourcePath.split('/').pop() || sourcePath) 
+            : 'Выписанные задачи: ' + (sourcePath.split('/').pop() || sourcePath),
+          frontmatter: {
+            type: 'extracted-tasks',
+            source: `[[${sourcePath}]]`,
+            tags: ['tasks/extracted']
+          },
+          lastModified: language === 'uk' ? 'Щойно' : language === 'en' ? 'Just now' : 'Только что',
+          content: newNoteFullContent
+        }
+      }));
+
+      toolCalls.push({
+        id: `tc_${Date.now()}_create`,
+        name: 'create_note',
+        parameters: {
+          relative_path: targetNewFile,
+          title: 'Extracted Tasks from ' + sourcePath,
+          content_length: newNoteFullContent.length
+        },
+        result: `HTTP 201 Created: ${targetNewFile} сохранен в Obsidian Vault`,
+        status: 'completed',
+        timestamp: new Date().toLocaleTimeString()
+      });
+
+      showToast(
+        language === 'uk' ? `Створено новий файл: ${targetNewFile}` : language === 'en' ? `Created new note: ${targetNewFile}` : `Создан новый файл: ${targetNewFile}`,
+        'success',
+        'HTTP 201 Created'
+      );
+
+      if (language === 'uk') {
+        responseText = `Я успішно опрацював файл **[[${sourcePath}]]**, вилучив усі завдання з синтаксисом Obsidian Tasks та створив окремий файл **[[${targetNewFile}]]**:
+
+## 📋 Виписані завдання з [[${sourcePath}]]
+${newTasksContent}
+
+> 📁 **Новий файл додано до сховища:** [[${targetNewFile}]].
+> Ви можете натиснути на посилання вище для попереднього перегляду або знайти його в папці **Projects** у лівому дереві файлів.
+> Чекбокси інтерактивні — будь-яка зміна синхронізується з фізичним файлом через Local REST API.`;
+      } else if (language === 'en') {
+        responseText = `I successfully processed **[[${sourcePath}]]**, extracted all Obsidian Tasks, and created a dedicated note **[[${targetNewFile}]]**:
+
+## 📋 Extracted Tasks from [[${sourcePath}]]
+${newTasksContent}
+
+> 📁 **New note added to Vault:** [[${targetNewFile}]].
+> You can click the link above to preview it or locate it under **Projects** in the left sidebar tree.
+> The checkboxes are interactive — toggles update the physical file via Local REST API.`;
+      } else {
+        responseText = `Я успешно обработал файл **[[${sourcePath}]]**, извлек все задачи синтаксиса Obsidian Tasks и создал отдельный файл **[[${targetNewFile}]]**:
+
+## 📋 Выписанные задачи из [[${sourcePath}]]
+${newTasksContent}
+
+> 📁 **Новый файл добавлен в хранилище:** [[${targetNewFile}]].
+> Вы можете нажать на ссылку выше для предпросмотра или найти его в папке **Projects** в левом дереве файлов.
+> Чекбоксы интерактивны — любые переключения синхронизируются с физическим файлом через Local REST API.`;
+      }
+
+    } else if (
       lower.includes('план') || 
       lower.includes('задач') || 
       lower.includes('завдан') || 
