@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host --port 5173",
     "build": "vite build",
-    "preview": "vite preview --host --port 5173"
+    "preview": "vite preview --host --port 5173",
+    "deploy": "vite build && npx gh-pages -d dist"
   },
   "dependencies": {
     "lucide-react": "^1.16.0",
